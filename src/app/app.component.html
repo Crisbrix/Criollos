@@ -1,0 +1,303 @@
+<main class="app">
+  <ng-container *ngIf="!state.token; else dashboard">
+    <section class="login-screen">
+      <article class="panel login-panel">
+        <div class="panel-header login-header">
+          <div>
+            <p class="eyebrow">Bienvenido a Criollos</p>
+            <h1>Inicia sesión</h1>
+            <p>Accede al dashboard para gestionar productos y realizar pedidos.</p>
+          </div>
+          <span class="brand-pill">Naranja · Blanco · Negro</span>
+        </div>
+
+        <form class="form" (ngSubmit)="login()">
+          <label>
+            Email
+            <input type="email" name="loginEmail" [(ngModel)]="loginForm.email" required>
+          </label>
+          <label>
+            Password
+            <input type="password" name="loginPassword" [(ngModel)]="loginForm.password" required>
+          </label>
+          <label>
+            Cédula para el pedido
+            <input name="loginCedula" [(ngModel)]="loginForm.cedula" required>
+          </label>
+          <button type="submit" class="primary full">Entrar</button>
+        </form>
+
+        <div class="divider"><span>o</span></div>
+
+        <div class="register-block">
+          <h2>Registro rápido</h2>
+          <form class="form two-columns" (ngSubmit)="crearUsuario()">
+            <label>
+              Cedula
+              <input name="usuarioCedula" [(ngModel)]="usuarioForm.cedula" required>
+            </label>
+            <label>
+              Nombre
+              <input name="usuarioNombre" [(ngModel)]="usuarioForm.nombre" required>
+            </label>
+            <label>
+              Apellido
+              <input name="usuarioApellido" [(ngModel)]="usuarioForm.apellido">
+            </label>
+            <label>
+              Email
+              <input type="email" name="usuarioEmail" [(ngModel)]="usuarioForm.email" required>
+            </label>
+            <label>
+              Usuario
+              <input name="usuarioUsername" [(ngModel)]="usuarioForm.username">
+            </label>
+            <label>
+              Password
+              <input type="password" name="usuarioPassword" [(ngModel)]="usuarioForm.password" required>
+            </label>
+            <label>
+              Edad
+              <input type="number" name="usuarioEdad" [(ngModel)]="usuarioForm.edad">
+            </label>
+            <label>
+              Telefono
+              <input name="usuarioTelefono" [(ngModel)]="usuarioForm.telefono">
+            </label>
+            <button type="submit" class="primary full">Crear usuario</button>
+          </form>
+        </div>
+      </article>
+    </section>
+  </ng-container>
+
+  <ng-template #dashboard>
+    <div class="dashboard-shell">
+      <aside class="sidebar">
+        <div class="brand-sidebar">
+          <span class="eyebrow">Dash</span>
+          <h2>Criollos</h2>
+          <p>Gestiona productos y pedidos desde aquí.</p>
+        </div>
+
+        <nav class="menu" aria-label="Menú principal">
+          <button type="button" [ngClass]="{ active: currentView === 'productos' }" (click)="currentView = 'productos'">Productos</button>
+          <button type="button" [ngClass]="{ active: currentView === 'pedidos' }" (click)="currentView = 'pedidos'">Hacer pedido</button>
+          <button type="button" [ngClass]="{ active: currentView === 'seguimiento' }" (click)="currentView = 'seguimiento'">Seguimiento</button>
+        </nav>
+
+        <div class="sidebar-footer">
+          <small>Sesión activa</small>
+          <strong>{{ state.usuario.nombre || state.usuario.email }}</strong>
+          <button type="button" class="ghost logout" (click)="reset()">Cerrar sesión</button>
+        </div>
+      </aside>
+
+      <section class="dashboard-main">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Sistema Criollos</p>
+            <h1>Hola, {{ state.usuario.nombre || 'Usuario' }}</h1>
+            <p>Selecciona una opción del menú para avanzar.</p>
+          </div>
+          <div class="session-card">
+            <span>Usuario</span>
+            <strong>{{ state.usuario.email || '---' }}</strong>
+          </div>
+        </header>
+
+        <section class="dashboard-cards">
+          <article class="card">
+            <strong>Productos</strong>
+            <p>{{ state.producto.nombre ? 'Seleccionado: ' + state.producto.nombre : 'Aún no hay producto seleccionado' }}</p>
+          </article>
+          <article class="card">
+            <strong>Pedidos</strong>
+            <p>{{ state.ultimoPedido.numeroPedido ? 'Último pedido: ' + state.ultimoPedido.numeroPedido : 'Crea un pedido para verlo aquí' }}</p>
+          </article>
+        </section>
+
+        <section class="view-grid">
+          <article class="panel" *ngIf="currentView === 'productos'">
+            <div class="panel-header">
+              <div>
+                <p class="eyebrow">Producto :8081</p>
+                <h2>Agregar producto</h2>
+              </div>
+              <span class="status" [ngClass]="{ ok: state.producto.productoId }">{{ state.producto.productoId ? 'Seleccionado' : 'Sin producto' }}</span>
+            </div>
+
+            <form class="form two-columns" (ngSubmit)="guardarProducto()">
+              <label>
+                Nombre
+                <input name="productoNombre" [(ngModel)]="productoForm.nombre" required>
+              </label>
+              <label>
+                Categoria
+                <input name="productoCategoria" [(ngModel)]="productoForm.categoria" required>
+              </label>
+              <label class="full">
+                Descripcion
+                <input name="productoDescripcion" [(ngModel)]="productoForm.descripcion">
+              </label>
+              <label>
+                Precio
+                <input type="number" step="0.01" name="productoPrecio" [(ngModel)]="productoForm.precio" required>
+              </label>
+              <label>
+                Stock
+                <input type="number" name="productoStock" [(ngModel)]="productoForm.stock" required>
+              </label>
+              <label>
+                Stock minimo
+                <input type="number" name="productoStockMinimo" [(ngModel)]="productoForm.stockMinimo" required>
+              </label>
+              <label class="check">
+                <input type="checkbox" name="productoActivo" [(ngModel)]="productoForm.activo">
+                Producto activo
+              </label>
+              <button type="submit" class="primary full">Guardar y usar producto</button>
+            </form>
+
+            <div class="panel-divider"></div>
+
+            <div>
+              <div class="panel-header">
+                <div>
+                  <p class="eyebrow">Inventario</p>
+                  <h2>Buscar productos</h2>
+                </div>
+              </div>
+              <div class="inline">
+                <input placeholder="ID producto existente" [(ngModel)]="productoBusquedaId">
+                <button type="button" (click)="buscarProducto()">Usar ID</button>
+                <button type="button" class="secondary" (click)="listarProductos()">Listar</button>
+              </div>
+              <div class="list">
+                <button type="button" class="list-row" *ngFor="let producto of productos" (click)="seleccionarProducto(producto)">
+                  <span>
+                    <strong>{{ producto.nombre }}</strong>
+                    <small>#{{ producto.productoId }} - {{ producto.categoria }}</small>
+                  </span>
+                  <span>{{ producto.stock }} und.</span>
+                </button>
+                <p class="empty" *ngIf="!productos.length">Carga productos para seleccionarlos aqui.</p>
+              </div>
+            </div>
+          </article>
+
+          <article class="panel" *ngIf="currentView === 'pedidos'">
+            <div class="panel-header">
+              <div>
+                <p class="eyebrow">Pedidos :8082</p>
+                <h2>Hacer pedido</h2>
+              </div>
+              <span class="status" [ngClass]="{ ok: state.ultimoPedido.numeroPedido }">{{ state.ultimoPedido.numeroPedido || 'Nuevo pedido' }}</span>
+            </div>
+
+            <div class="summary">
+              <span>Cliente</span>
+              <strong>{{ state.usuario.nombre || 'Sin login' }} - {{ state.cedula || 'sin cedula' }}</strong>
+              <span>Producto</span>
+              <strong>{{ state.producto.nombre || 'Selecciona un producto' }}</strong>
+            </div>
+
+            <form class="form two-columns" (ngSubmit)="crearPedido()">
+              <label>
+                Mesa
+                <input name="pedidoMesa" [(ngModel)]="pedidoForm.mesa">
+              </label>
+              <label>
+                Metodo pago
+                <select name="pedidoMetodoPago" [(ngModel)]="pedidoForm.metodoPago">
+                  <option value="EFECTIVO">EFECTIVO</option>
+                  <option value="TARJETA">TARJETA</option>
+                  <option value="TRANSFERENCIA">TRANSFERENCIA</option>
+                </select>
+              </label>
+              <label>
+                Cantidad
+                <input type="number" name="pedidoCantidad" [(ngModel)]="pedidoForm.cantidad" required>
+              </label>
+              <label>
+                Impuesto
+                <input type="number" step="0.01" name="pedidoImpuesto" [(ngModel)]="pedidoForm.impuesto">
+              </label>
+              <label class="full">
+                Notas
+                <input name="pedidoNotas" [(ngModel)]="pedidoForm.notas">
+              </label>
+              <button type="submit" class="primary full">Crear pedido</button>
+            </form>
+
+            <div class="panel-divider"></div>
+
+            <div>
+              <div class="panel-header">
+                <div>
+                  <p class="eyebrow">Consulta</p>
+                  <h2>Buscar pedidos</h2>
+                </div>
+              </div>
+              <div class="inline">
+                <input placeholder="Numero de pedido" [(ngModel)]="pedidoBusquedaNumero">
+                <button type="button" (click)="buscarPedido()">Buscar</button>
+                <button type="button" class="secondary" (click)="listarPedidos()">Listar</button>
+              </div>
+              <div class="inline">
+                <select [(ngModel)]="estadoFiltro">
+                  <option value="PENDIENTE">PENDIENTE</option>
+                  <option value="EN_PREPARACION">EN_PREPARACION</option>
+                  <option value="ENTREGADO">ENTREGADO</option>
+                  <option value="CANCELADO">CANCELADO</option>
+                </select>
+                <button type="button" class="secondary" (click)="listarPedidosPorEstado()">Filtrar estado</button>
+              </div>
+              <div class="list">
+                <button type="button" class="list-row" *ngFor="let pedido of pedidos" (click)="seleccionarPedido(pedido)">
+                  <span>
+                    <strong>{{ pedido.numeroPedido }}</strong>
+                    <small>{{ pedido.nombreCliente || pedido.cedulaCliente }} - {{ pedido.estado }}</small>
+                  </span>
+                  <span>{{ pedido.total | currency:'$':'symbol':'1.0-0' }}</span>
+                </button>
+                <p class="empty" *ngIf="!pedidos.length">Aun no hay pedidos cargados.</p>
+              </div>
+            </div>
+          </article>
+
+          <article class="panel wide" *ngIf="currentView === 'seguimiento'">
+            <div class="panel-header">
+              <div>
+                <p class="eyebrow">Trazabilidad</p>
+                <h2>Eventos del flujo</h2>
+              </div>
+              <button type="button" class="ghost dark" (click)="limpiarEventos()">Limpiar eventos</button>
+            </div>
+            <ol class="timeline">
+              <li *ngFor="let evento of eventos">
+                <time>{{ evento.hora | date:'HH:mm:ss' }}</time>
+                <div>
+                  <strong>{{ evento.titulo }}</strong>
+                  <p>{{ evento.detalle }}</p>
+                </div>
+              </li>
+            </ol>
+            <p class="empty" *ngIf="!eventos.length">Los eventos apareceran cuando uses el flujo.</p>
+          </article>
+        </section>
+
+        <section class="result-panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Respuesta API</p>
+              <h2>{{ outputTitle }}</h2>
+            </div>
+            <button type="button" class="ghost dark" (click)="clearOutput()">Limpiar</button>
+          </div>
+          <pre>{{ output | json }}</pre>
+        </section>
+      </section>
+    </div>
+  </ng-template>
+</main>
