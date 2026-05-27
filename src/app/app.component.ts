@@ -48,7 +48,7 @@ interface EventoTrazabilidad {
 }
 
 const API = {
-  auth: 'https://auth-j0i2.onrender.com',
+  auth: 'https://auth-j0i2.onrender.com/api/criollos/usuarios',
   productos: 'http://localhost:8081/productos',
   pedidos: 'http://localhost:8082/api/criollos/pedidos'
 };
