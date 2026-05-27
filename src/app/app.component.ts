@@ -4,6 +4,7 @@ import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 type ViewName = 'login' | 'productos' | 'pedidos' | 'seguimiento';
+type AuthMode = 'login' | 'register';
 
 interface UsuarioSesion {
   email?: string;
@@ -47,7 +48,7 @@ interface EventoTrazabilidad {
 }
 
 const API = {
-  auth: 'http://localhost:8080/api/criollos/usuarios',
+  auth: 'https://auth-j0i2.onrender.com',
   productos: 'http://localhost:8081/productos',
   pedidos: 'http://localhost:8082/api/criollos/pedidos'
 };
@@ -62,6 +63,7 @@ export class AppComponent {
   private readonly http = inject(HttpClient);
 
   currentView: ViewName = 'login';
+  authMode: AuthMode = 'login';
   outputTitle = 'Listo para probar';
   output: unknown = {
     ayuda: 'Enciende Auth en 8080, Producto en 8081 y Pedidos en 8082.'
@@ -80,6 +82,10 @@ export class AppComponent {
     password: '123456',
     cedula: '123456'
   };
+
+  loginLoading = false;
+
+  containerTransform = 'perspective(1000px) rotateX(0deg) rotateY(0deg)';
 
   usuarioForm = {
     cedula: '123456',
@@ -157,14 +163,17 @@ export class AppComponent {
       this.loginForm.email = payload.email;
       this.loginForm.password = payload.password;
       this.loginForm.cedula = payload.cedula;
+      this.authMode = 'login';
     });
   }
 
   login(): void {
+    this.loginLoading = true;
     this.request<{ token?: string; usuario?: UsuarioSesion }>('Login', 'POST', `${API.auth}/login`, {
       email: this.loginForm.email,
       password: this.loginForm.password
     }, (data) => {
+      this.loginLoading = false;
       if (!data?.token) return;
       this.state.token = data.token;
       this.state.usuario = data.usuario || {};
@@ -172,6 +181,31 @@ export class AppComponent {
       this.currentView = 'productos';
       this.addEvento('Sesion iniciada', `Cliente ${this.state.usuario.nombre || this.state.cedula} autenticado.`);
     });
+  }
+
+  socialLogin(provider: string): void {
+    this.addEvento('Social login', `Iniciando sesión con ${provider}`);
+    this.setOutput(`Social login: ${provider}`, { mensaje: `Simulado: ${provider}` });
+  }
+
+  onMouseMove(e: MouseEvent): void {
+    const el = e.currentTarget as HTMLElement;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+
+    const rotateX = (y - centerY) / 20;
+    const rotateY = (centerX - x) / 20;
+
+    this.containerTransform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+  }
+
+  onMouseLeave(): void {
+    this.containerTransform = 'perspective(1000px) rotateX(0deg) rotateY(0deg)';
   }
 
   guardarProducto(): void {
@@ -289,6 +323,7 @@ export class AppComponent {
     this.pedidos = [];
     this.eventos = [];
     this.currentView = 'login';
+    this.authMode = 'login';
     this.setOutput('Flujo reiniciado', {
       mensaje: 'Puedes iniciar de nuevo desde login.'
     });

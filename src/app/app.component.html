@@ -1,73 +1,139 @@
 <main class="app">
   <ng-container *ngIf="!state.token; else dashboard">
     <section class="login-screen">
-      <article class="panel login-panel">
-        <div class="panel-header login-header">
-          <div>
-            <p class="eyebrow">Bienvenido a Criollos</p>
-            <h1>Inicia sesión</h1>
-            <p>Accede al dashboard para gestionar productos y realizar pedidos.</p>
+      <div class="login-bg">
+        <div class="bg-shape"></div>
+        <div class="bg-shape"></div>
+        <div class="bg-shape"></div>
+
+        <div class="login-container" [ngClass]="{ 'register-container': authMode === 'register' }" [style.transform]="containerTransform" (mousemove)="onMouseMove($event)" (mouseleave)="onMouseLeave()">
+          <div class="login-header">
+            <div class="logo-container">
+              <div class="logo">
+                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M30 15 C25 15, 20 20, 20 25 L20 45 C20 50, 25 55, 30 55 L35 55 L35 75 C35 80, 40 85, 45 85 L55 85 C60 85, 65 80, 65 75 L65 55 L70 55 C75 55, 80 50, 80 45 L80 25 C80 20, 75 15, 70 15 L30 15 Z M35 25 L45 25 L45 45 L35 45 L35 25 Z M55 25 L65 25 L65 45 L55 45 L55 25 Z"/>
+                </svg>
+              </div>
+              <h1 class="login-title">Criollo S</h1>
+            </div>
+            <p class="login-subtitle">Inicia sesión en tu cuenta</p>
           </div>
-          <span class="brand-pill">Naranja · Blanco · Negro</span>
-        </div>
 
-        <form class="form" (ngSubmit)="login()">
-          <label>
-            Email
-            <input type="email" name="loginEmail" [(ngModel)]="loginForm.email" required>
-          </label>
-          <label>
-            Password
-            <input type="password" name="loginPassword" [(ngModel)]="loginForm.password" required>
-          </label>
-          <label>
-            Cédula para el pedido
-            <input name="loginCedula" [(ngModel)]="loginForm.cedula" required>
-          </label>
-          <button type="submit" class="primary full">Entrar</button>
-        </form>
+          <form *ngIf="authMode === 'login'" id="loginForm" (ngSubmit)="login()" class="form">
+            <div class="form-group">
+              <input type="email" class="form-input" placeholder=" " name="loginEmail" [(ngModel)]="loginForm.email" required>
+              <label class="form-label">Correo electrónico</label>
+            </div>
 
-        <div class="divider"><span>o</span></div>
+            <div class="form-group">
+              <input type="password" class="form-input" placeholder=" " name="loginPassword" [(ngModel)]="loginForm.password" required>
+              <label class="form-label">Contraseña</label>
+            </div>
 
-        <div class="register-block">
-          <h2>Registro rápido</h2>
-          <form class="form two-columns" (ngSubmit)="crearUsuario()">
-            <label>
-              Cedula
-              <input name="usuarioCedula" [(ngModel)]="usuarioForm.cedula" required>
-            </label>
-            <label>
-              Nombre
-              <input name="usuarioNombre" [(ngModel)]="usuarioForm.nombre" required>
-            </label>
-            <label>
-              Apellido
-              <input name="usuarioApellido" [(ngModel)]="usuarioForm.apellido">
-            </label>
-            <label>
-              Email
-              <input type="email" name="usuarioEmail" [(ngModel)]="usuarioForm.email" required>
-            </label>
-            <label>
-              Usuario
-              <input name="usuarioUsername" [(ngModel)]="usuarioForm.username">
-            </label>
-            <label>
-              Password
-              <input type="password" name="usuarioPassword" [(ngModel)]="usuarioForm.password" required>
-            </label>
-            <label>
-              Edad
-              <input type="number" name="usuarioEdad" [(ngModel)]="usuarioForm.edad">
-            </label>
-            <label>
-              Telefono
-              <input name="usuarioTelefono" [(ngModel)]="usuarioForm.telefono">
-            </label>
-            <button type="submit" class="primary full">Crear usuario</button>
+            <div class="login-options">
+              <label class="remember-me">
+                <input type="checkbox" name="rememberMe">
+                Recordarme
+              </label>
+              <a href="#" class="forgot-password">¿Olvidaste tu contraseña?</a>
+            </div>
+
+            <button type="submit" class="login-btn" [disabled]="loginLoading">
+              <span class="btn-text">Iniciar Sesión</span>
+              <div class="loading" *ngIf="loginLoading">
+                <div class="spinner"></div>
+              </div>
+            </button>
           </form>
+
+          <form *ngIf="authMode === 'register'" id="registerForm" (ngSubmit)="crearUsuario()" class="form register-form">
+            <div class="form-grid">
+              <div class="form-group">
+                <input class="form-input" placeholder=" " name="cedula" [(ngModel)]="usuarioForm.cedula" required>
+                <label class="form-label">Cedula</label>
+              </div>
+
+              <div class="form-group">
+                <input class="form-input" placeholder=" " name="username" [(ngModel)]="usuarioForm.username" required>
+                <label class="form-label">Usuario</label>
+              </div>
+
+              <div class="form-group">
+                <input class="form-input" placeholder=" " name="nombre" [(ngModel)]="usuarioForm.nombre">
+                <label class="form-label">Nombre</label>
+              </div>
+
+              <div class="form-group">
+                <input class="form-input" placeholder=" " name="apellido" [(ngModel)]="usuarioForm.apellido">
+                <label class="form-label">Apellido</label>
+              </div>
+
+              <div class="form-group full-field">
+                <input type="email" class="form-input" placeholder=" " name="email" [(ngModel)]="usuarioForm.email" required>
+                <label class="form-label">Correo electronico</label>
+              </div>
+
+              <div class="form-group">
+                <input type="password" class="form-input" placeholder=" " name="password" [(ngModel)]="usuarioForm.password" required>
+                <label class="form-label">Contrasena</label>
+              </div>
+
+              <div class="form-group">
+                <input type="number" class="form-input" placeholder=" " name="edad" [(ngModel)]="usuarioForm.edad">
+                <label class="form-label">Edad</label>
+              </div>
+
+              <div class="form-group">
+                <input class="form-input" placeholder=" " name="telefono" [(ngModel)]="usuarioForm.telefono">
+                <label class="form-label">Telefono</label>
+              </div>
+
+              <div class="form-group">
+                <select class="form-input" name="role" [(ngModel)]="usuarioForm.role">
+                  <option value="USER">USER</option>
+                  <option value="ADMIN">ADMIN</option>
+                </select>
+                <label class="form-label lifted">Rol</label>
+              </div>
+
+              <div class="form-group full-field">
+                <select class="form-input" name="estado" [(ngModel)]="usuarioForm.estado">
+                  <option value="ACTIVO">ACTIVO</option>
+                  <option value="INACTIVO">INACTIVO</option>
+                </select>
+                <label class="form-label lifted">Estado</label>
+              </div>
+            </div>
+
+            <button type="submit" class="login-btn">
+              <span class="btn-text">Registrarme</span>
+            </button>
+          </form>
+
+          <div class="social-login" *ngIf="authMode === 'login'">
+            <p class="social-text">O continúa con</p>
+            <div class="social-buttons">
+              <button class="social-btn" type="button" (click)="socialLogin('google')">G</button>
+              <button class="social-btn" type="button" (click)="socialLogin('facebook')">F</button>
+              <button class="social-btn" type="button" (click)="socialLogin('twitter')">T</button>
+            </div>
+          </div>
+
+          <div class="signup-link" *ngIf="false">
+            ¿No tienes una cuenta? <a href="#">Regístrate aquí</a>
+          </div>
+
+          <div class="signup-link" *ngIf="authMode === 'login'">
+            No tienes una cuenta?
+            <button type="button" class="text-link" (click)="authMode = 'register'">Registrate aqui</button>
+          </div>
+
+          <div class="signup-link" *ngIf="authMode === 'register'">
+            Ya tienes una cuenta?
+            <button type="button" class="text-link" (click)="authMode = 'login'">Inicia sesion</button>
+          </div>
         </div>
-      </article>
+      </div>
     </section>
   </ng-container>
 
