@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 
 type ViewName = 'login' | 'productos' | 'pedidos' | 'seguimiento';
 type AuthMode = 'login' | 'register';
+type ModalName = 'producto' | 'pedido' | null;
 
 interface UsuarioSesion {
   email?: string;
@@ -49,8 +50,8 @@ interface EventoTrazabilidad {
 
 const API = {
   auth: 'https://auth-j0i2.onrender.com/api/criollos/usuarios',
-  productos: 'http://localhost:8081/productos',
-  pedidos: 'http://localhost:8082/api/criollos/pedidos'
+  productos: 'https://producto-2fxd.onrender.com/productos',
+  pedidos: 'https://pedidos-dg22.onrender.com/api/criollos/pedidos'
 };
 
 @Component({
@@ -64,9 +65,10 @@ export class AppComponent {
 
   currentView: ViewName = 'login';
   authMode: AuthMode = 'login';
+  activeModal: ModalName = null;
   outputTitle = 'Listo para probar';
   output: unknown = {
-    ayuda: 'Enciende Auth en 8080, Producto en 8081 y Pedidos en 8082.'
+    ayuda: 'Servicios configurados en Render: Auth, Producto y Pedidos.'
   };
 
   state = {
@@ -119,6 +121,7 @@ export class AppComponent {
   };
 
   productoBusquedaId = '1';
+  productoPedidoId = '';
   pedidoBusquedaNumero = '';
   estadoFiltro = 'PENDIENTE';
   productos: Producto[] = [];
@@ -151,6 +154,56 @@ export class AppComponent {
       detail: () => `${this.eventos.length} eventos`
     }
   ];
+
+  get totalProductos(): number {
+    const loaded = this.productos.length;
+    return loaded || (this.state.producto.productoId ? 1 : 0);
+  }
+
+  get totalStock(): number {
+    const productos = this.productos.length ? this.productos : (this.state.producto.productoId ? [this.state.producto] : []);
+    return productos.reduce((total, producto) => total + this.numberOrZero(producto.stock), 0);
+  }
+
+  get alertasActivas(): number {
+    const productos = this.productos.length ? this.productos : (this.state.producto.productoId ? [this.state.producto] : []);
+    return productos.filter((producto) => this.numberOrZero(producto.stock) <= this.numberOrZero(producto.stockMinimo)).length;
+  }
+
+  get ultimosPedidos(): Pedido[] {
+    return (this.pedidos.length ? this.pedidos : (this.state.ultimoPedido.numeroPedido ? [this.state.ultimoPedido] : [])).slice(0, 3);
+  }
+
+  get productosResumen(): Producto[] {
+    return (this.productos.length ? this.productos : (this.state.producto.productoId ? [this.state.producto] : [])).slice(0, 3);
+  }
+
+  get eventosDashboard(): EventoTrazabilidad[] {
+    return this.eventos.slice(0, 3);
+  }
+
+  estadoClase(estado?: string): string {
+    const normalized = (estado || '').toUpperCase();
+    if (normalized === 'ENTREGADO') return 'done';
+    if (normalized === 'CANCELADO' || normalized === 'ANULADO') return 'cancelled';
+    return 'pending';
+  }
+
+  abrirModalProducto(): void {
+    this.activeModal = 'producto';
+  }
+
+  abrirModalPedido(): void {
+    this.activeModal = 'pedido';
+    this.productoPedidoId = this.state.producto.productoId ? String(this.state.producto.productoId) : '';
+    if (!this.productos.length) {
+      this.listarProductos();
+    }
+  }
+
+  cerrarModal(): void {
+    this.activeModal = null;
+  }
 
   crearUsuario(): void {
     const payload = {
@@ -221,6 +274,7 @@ export class AppComponent {
       if (!producto?.productoId) return;
       this.seleccionarProducto(producto);
       this.currentView = 'pedidos';
+      this.cerrarModal();
     });
   }
 
@@ -243,7 +297,17 @@ export class AppComponent {
     this.state.producto = producto || {};
     if (!producto?.productoId) return;
     this.productoBusquedaId = String(producto.productoId);
+    this.productoPedidoId = String(producto.productoId);
     this.addEvento('Producto seleccionado', `${producto.nombre} #${producto.productoId}`);
+  }
+
+  seleccionarProductoPorId(productoId: string): void {
+    this.productoPedidoId = productoId;
+    const id = Number(productoId);
+    const producto = this.productos.find((item) => item.productoId === id);
+    if (producto) {
+      this.seleccionarProducto(producto);
+    }
   }
 
   crearPedido(): void {
@@ -272,6 +336,7 @@ export class AppComponent {
       if (!pedido?.numeroPedido) return;
       this.seleccionarPedido(pedido);
       this.currentView = 'seguimiento';
+      this.cerrarModal();
     });
   }
 

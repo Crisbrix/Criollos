@@ -140,46 +140,278 @@
   <ng-template #dashboard>
     <div class="dashboard-shell">
       <aside class="sidebar">
-        <div class="brand-sidebar">
-          <span class="eyebrow">Dash</span>
-          <h2>Criollos</h2>
-          <p>Gestiona productos y pedidos desde aquí.</p>
+        <div>
+          <div class="brand-sidebar">
+            <div class="brand-heading">
+              <div class="brand-mark">P</div>
+              <div>
+                <span class="eyebrow">POS</span>
+                <h2>Criollo S</h2>
+              </div>
+            </div>
+            <p>Gestiona inventario y pedidos desde un panel simple.</p>
+          </div>
+
+          <nav class="menu" aria-label="Menú principal">
+            <button type="button" [ngClass]="{ active: currentView === 'productos' }" (click)="currentView = 'productos'">
+              <span class="menu-label">Productos</span>
+            </button>
+            <button type="button" [ngClass]="{ active: currentView === 'pedidos' }" (click)="currentView = 'pedidos'">
+              <span class="menu-label">Pedidos</span>
+            </button>
+            <button type="button" [ngClass]="{ active: currentView === 'seguimiento' }" (click)="currentView = 'seguimiento'">
+              <span class="menu-label">Seguimiento</span>
+            </button>
+          </nav>
         </div>
 
-        <nav class="menu" aria-label="Menú principal">
-          <button type="button" [ngClass]="{ active: currentView === 'productos' }" (click)="currentView = 'productos'">Productos</button>
-          <button type="button" [ngClass]="{ active: currentView === 'pedidos' }" (click)="currentView = 'pedidos'">Hacer pedido</button>
-          <button type="button" [ngClass]="{ active: currentView === 'seguimiento' }" (click)="currentView = 'seguimiento'">Seguimiento</button>
-        </nav>
-
         <div class="sidebar-footer">
-          <small>Sesión activa</small>
-          <strong>{{ state.usuario.nombre || state.usuario.email }}</strong>
-          <button type="button" class="ghost logout" (click)="reset()">Cerrar sesión</button>
+          <div class="profile-card">
+            <div class="avatar">A</div>
+            <div>
+              <p class="profile-name">Admin Usuario</p>
+              <p class="profile-meta">Sesion activa</p>
+            </div>
+          </div>
+          <button type="button" class="ghost logout" (click)="reset()">Cerrar sesion</button>
         </div>
       </aside>
 
       <section class="dashboard-main">
+        <header class="premium-header">
+          <div class="brand-lockup">
+            <div class="brand-mark">P</div>
+            <div>
+              <div class="brand-title">
+                <span>POS<span>System</span></span>
+                <small>Dashboard</small>
+              </div>
+              <p>Gestion de inventario y pedidos en tiempo real</p>
+            </div>
+          </div>
+
+          <div class="header-actions">
+            <button type="button" class="primary action-button" (click)="abrirModalPedido()">
+              <span class="action-icon">+</span>
+              Nueva Pedido
+            </button>
+            <button type="button" class="primary action-button" (click)="abrirModalProducto()">
+              <span class="action-icon">+</span>
+              Nuevo producto
+            </button>
+            <div class="user-chip">
+              <div class="avatar">{{ (state.usuario.nombre || state.usuario.email || 'U').charAt(0) }}</div>
+              <div>
+                <p>{{ state.usuario.nombre || 'User POS' }}</p>
+                <span>auth_v1</span>
+              </div>
+            </div>
+            <button type="button" class="ghost logout" (click)="reset()">Salir</button>
+          </div>
+        </header>
+
+        <section class="kpi-grid">
+          <article class="kpi-card">
+            <div>
+              <p>Pedidos hoy</p>
+              <strong>{{ pedidos.length }}</strong>
+              <span class="metric-positive">API Pedidos activa</span>
+            </div>
+            <div class="kpi-icon cart-icon"></div>
+          </article>
+
+          <article class="kpi-card">
+            <div>
+              <p>Productos totales</p>
+              <strong>{{ totalProductos }}</strong>
+              <span class="metric-neutral">Catalogo sincronizado</span>
+            </div>
+            <div class="kpi-icon package-icon"></div>
+          </article>
+
+          <article class="kpi-card">
+            <div>
+              <p>Stock disponible</p>
+              <strong>{{ totalStock }}</strong>
+              <span class="metric-positive">Unidades registradas</span>
+            </div>
+            <div class="kpi-icon award-icon"></div>
+          </article>
+
+          <article class="kpi-card">
+            <div>
+              <p>Alertas activas</p>
+              <strong>{{ alertasActivas }}</strong>
+              <span class="metric-danger">Requiere revision</span>
+            </div>
+            <div class="kpi-icon bell-icon">
+              <small>{{ alertasActivas }}</small>
+            </div>
+          </article>
+        </section>
+
+        <section class="analytics-grid">
+          <article class="dashboard-card chart-card">
+            <div class="section-heading">
+              <div>
+                <h2>Tendencia de Productos Mas Vendidos</h2>
+                <p>Flujo de salida por franja horaria hoy</p>
+              </div>
+              <select aria-label="Vista del grafico">
+                <option>Vista de Hoy</option>
+                <option>Semanal</option>
+              </select>
+            </div>
+            <div class="chart-shell" aria-label="Grafico de unidades vendidas">
+              <div class="chart-grid"></div>
+              <svg viewBox="0 0 640 240" role="img" aria-label="Tendencia de ventas">
+                <defs>
+                  <linearGradient id="orangeArea" x1="0" x2="0" y1="0" y2="1">
+                    <stop offset="0%" stop-color="#f97316" stop-opacity="0.24"></stop>
+                    <stop offset="100%" stop-color="#f97316" stop-opacity="0"></stop>
+                  </linearGradient>
+                </defs>
+                <path class="area" d="M0 178 C70 110 112 128 168 145 C225 164 255 72 320 92 C390 116 410 52 480 74 C548 96 572 40 640 58 L640 240 L0 240 Z"></path>
+                <path class="trend" d="M0 178 C70 110 112 128 168 145 C225 164 255 72 320 92 C390 116 410 52 480 74 C548 96 572 40 640 58"></path>
+                <circle cx="168" cy="145" r="5"></circle>
+                <circle cx="320" cy="92" r="5"></circle>
+                <circle cx="480" cy="74" r="5"></circle>
+                <circle cx="635" cy="58" r="5"></circle>
+              </svg>
+              <div class="chart-labels">
+                <span>09:00</span>
+                <span>13:00</span>
+                <span>17:00</span>
+                <span>21:00</span>
+              </div>
+            </div>
+          </article>
+
+          <article class="dashboard-card orders-card">
+            <div class="section-heading compact">
+              <div>
+                <h2>Ultimos Pedidos</h2>
+                <p>Monitoreo del flujo de salida</p>
+              </div>
+              <button type="button" class="text-action" (click)="listarPedidos()">Ver todos</button>
+            </div>
+            <div class="orders-table">
+              <div class="table-head">
+                <span>No. Pedido</span>
+                <span>Cliente</span>
+                <span>Estado</span>
+              </div>
+              <button type="button" class="table-row" *ngFor="let pedido of ultimosPedidos" (click)="seleccionarPedido(pedido)">
+                <strong>{{ pedido.numeroPedido || 'Nuevo' }}</strong>
+                <span>{{ pedido.nombreCliente || pedido.cedulaCliente || state.usuario.nombre || 'Cliente POS' }}</span>
+                <small [ngClass]="estadoClase(pedido.estado)">{{ pedido.estado || 'PENDIENTE' }}</small>
+              </button>
+              <p class="empty compact-empty" *ngIf="!ultimosPedidos.length">Carga pedidos para verlos aqui.</p>
+            </div>
+          </article>
+        </section>
+
+        <section class="bottom-grid">
+          <article class="dashboard-card inventory-card">
+            <div class="section-heading">
+              <div>
+                <h2>Inventario y Mas Vendidos</h2>
+                <p>Articulos de alta rotacion y control de stock bajo</p>
+              </div>
+              <button type="button" class="text-action" (click)="listarProductos()">Actualizar</button>
+            </div>
+            <div class="featured-products">
+              <button type="button" class="product-row" *ngFor="let producto of productosResumen" (click)="seleccionarProducto(producto)">
+                <div class="product-info">
+                  <div class="product-icon"></div>
+                  <div>
+                    <h3>{{ producto.nombre || 'Producto' }}</h3>
+                    <p>{{ producto.categoria || 'Categoria' }}</p>
+                  </div>
+                </div>
+                <div class="product-metrics">
+                  <span>{{ producto.stock || 0 }} unidades</span>
+                  <small [ngClass]="{ danger: (producto.stock || 0) <= (producto.stockMinimo || 0) }">
+                    {{ (producto.stock || 0) <= (producto.stockMinimo || 0) ? 'Stock critico' : 'Disponible' }}
+                  </small>
+                </div>
+              </button>
+              <p class="empty compact-empty" *ngIf="!productosResumen.length">Carga productos para ver inventario.</p>
+            </div>
+          </article>
+
+          <article class="dashboard-card notifications-card">
+            <div class="section-heading compact">
+              <div>
+                <h2>Notificaciones del Sistema</h2>
+                <p>Historial de incidencias y estado de APIs</p>
+              </div>
+            </div>
+            <div class="mini-timeline">
+              <div class="mini-event stable">
+                <time>Online</time>
+                <div>
+                  <h3>Conexion de APIs estable</h3>
+                  <p>Auth, Pedidos y Productos operan normal.</p>
+                </div>
+              </div>
+              <div class="mini-event warning" *ngIf="alertasActivas">
+                <time>Stock</time>
+                <div>
+                  <h3>Alerta de stock minimo</h3>
+                  <p>{{ alertasActivas }} producto(s) requieren revision.</p>
+                </div>
+              </div>
+              <div class="mini-event" *ngFor="let evento of eventosDashboard">
+                <time>{{ evento.hora | date:'HH:mm' }}</time>
+                <div>
+                  <h3>{{ evento.titulo }}</h3>
+                  <p>{{ evento.detalle }}</p>
+                </div>
+              </div>
+            </div>
+          </article>
+        </section>
+
+        <div class="workspace-tabs">
+          <button type="button" [ngClass]="{ active: currentView === 'productos' }" (click)="currentView = 'productos'">Productos</button>
+          <button type="button" [ngClass]="{ active: currentView === 'pedidos' }" (click)="currentView = 'pedidos'">Pedidos</button>
+          <button type="button" [ngClass]="{ active: currentView === 'seguimiento' }" (click)="currentView = 'seguimiento'">Seguimiento</button>
+        </div>
+
         <header class="topbar">
           <div>
-            <p class="eyebrow">Sistema Criollos</p>
-            <h1>Hola, {{ state.usuario.nombre || 'Usuario' }}</h1>
-            <p>Selecciona una opción del menú para avanzar.</p>
+            <h1>Panel de Control</h1>
+            <p class="topbar-subtitle">Productos, pedidos y respuestas de API en un solo lugar.</p>
           </div>
-          <div class="session-card">
-            <span>Usuario</span>
-            <strong>{{ state.usuario.email || '---' }}</strong>
+          <div class="topbar-actions">
+            <span class="status-badge"><span></span>APIs Online</span>
           </div>
         </header>
 
         <section class="dashboard-cards">
-          <article class="card">
-            <strong>Productos</strong>
-            <p>{{ state.producto.nombre ? 'Seleccionado: ' + state.producto.nombre : 'Aún no hay producto seleccionado' }}</p>
+          <article class="stat-card">
+            <div class="stat-card-header">
+              <span>Producto seleccionado</span>
+            </div>
+            <strong>{{ state.producto.nombre || 'Sin producto' }}</strong>
+            <p class="stat-note">{{ state.producto.productoId ? ('#' + state.producto.productoId) : 'Pendiente' }}</p>
           </article>
-          <article class="card">
-            <strong>Pedidos</strong>
-            <p>{{ state.ultimoPedido.numeroPedido ? 'Último pedido: ' + state.ultimoPedido.numeroPedido : 'Crea un pedido para verlo aquí' }}</p>
+
+          <article class="stat-card">
+            <div class="stat-card-header">
+              <span>Pedidos cargados</span>
+            </div>
+            <strong>{{ pedidos.length }}</strong>
+            <p class="stat-note">Lista actual</p>
+          </article>
+
+          <article class="stat-card">
+            <div class="stat-card-header">
+              <span>Eventos</span>
+            </div>
+            <strong>{{ eventos.length }}</strong>
+            <p class="stat-note">Actividad del flujo</p>
           </article>
         </section>
 
@@ -187,7 +419,7 @@
           <article class="panel" *ngIf="currentView === 'productos'">
             <div class="panel-header">
               <div>
-                <p class="eyebrow">Producto :8081</p>
+                <p class="eyebrow">Producto</p>
                 <h2>Agregar producto</h2>
               </div>
               <span class="status" [ngClass]="{ ok: state.producto.productoId }">{{ state.producto.productoId ? 'Seleccionado' : 'Sin producto' }}</span>
@@ -255,7 +487,7 @@
           <article class="panel" *ngIf="currentView === 'pedidos'">
             <div class="panel-header">
               <div>
-                <p class="eyebrow">Pedidos :8082</p>
+                <p class="eyebrow">Pedidos</p>
                 <h2>Hacer pedido</h2>
               </div>
               <span class="status" [ngClass]="{ ok: state.ultimoPedido.numeroPedido }">{{ state.ultimoPedido.numeroPedido || 'Nuevo pedido' }}</span>
@@ -363,6 +595,113 @@
           </div>
           <pre>{{ output | json }}</pre>
         </section>
+
+        <div class="modal-backdrop" *ngIf="activeModal" (click)="cerrarModal()">
+          <section class="quick-modal" (click)="$event.stopPropagation()">
+            <button type="button" class="modal-close" aria-label="Cerrar modal" (click)="cerrarModal()">x</button>
+
+            <ng-container *ngIf="activeModal === 'producto'">
+              <div class="modal-heading">
+                <p class="eyebrow">Producto</p>
+                <h2>Nuevo producto</h2>
+                <span>Agrega un articulo al catalogo de Productos.</span>
+              </div>
+
+              <form class="form two-columns" (ngSubmit)="guardarProducto()">
+                <label>
+                  Nombre
+                  <input name="modalProductoNombre" [(ngModel)]="productoForm.nombre" required>
+                </label>
+                <label>
+                  Categoria
+                  <input name="modalProductoCategoria" [(ngModel)]="productoForm.categoria" required>
+                </label>
+                <label class="full">
+                  Descripcion
+                  <input name="modalProductoDescripcion" [(ngModel)]="productoForm.descripcion">
+                </label>
+                <label>
+                  Precio
+                  <input type="number" step="0.01" name="modalProductoPrecio" [(ngModel)]="productoForm.precio" required>
+                </label>
+                <label>
+                  Stock
+                  <input type="number" name="modalProductoStock" [(ngModel)]="productoForm.stock" required>
+                </label>
+                <label>
+                  Stock minimo
+                  <input type="number" name="modalProductoStockMinimo" [(ngModel)]="productoForm.stockMinimo" required>
+                </label>
+                <label class="check">
+                  <input type="checkbox" name="modalProductoActivo" [(ngModel)]="productoForm.activo">
+                  Producto activo
+                </label>
+                <button type="submit" class="primary full">Guardar producto</button>
+              </form>
+            </ng-container>
+
+            <ng-container *ngIf="activeModal === 'pedido'">
+              <div class="modal-heading">
+                <p class="eyebrow">Venta</p>
+                <h2>Nuevo pedido</h2>
+                <span>{{ state.producto.nombre ? 'Producto seleccionado: ' + state.producto.nombre : 'Selecciona un producto del catalogo para crear el pedido.' }}</span>
+              </div>
+
+              <div class="modal-picker">
+                <label>
+                  Producto
+                  <select
+                    name="modalProductoPedidoId"
+                    [(ngModel)]="productoPedidoId"
+                    (ngModelChange)="seleccionarProductoPorId($event)"
+                  >
+                    <option value="">Selecciona un producto</option>
+                    <option *ngFor="let producto of productos" [value]="producto.productoId">
+                      {{ producto.nombre }} - #{{ producto.productoId }} - {{ producto.stock }} und.
+                    </option>
+                  </select>
+                </label>
+                <button type="button" class="secondary modal-refresh" (click)="listarProductos()">Actualizar productos</button>
+                <p class="empty compact-empty" *ngIf="!productos.length">No hay productos cargados todavia.</p>
+              </div>
+
+              <div class="summary modal-summary">
+                <span>Cliente</span>
+                <strong>{{ state.usuario.nombre || 'Sin login' }} - {{ state.cedula || 'sin cedula' }}</strong>
+                <span>Producto</span>
+                <strong>{{ state.producto.nombre || 'Selecciona un producto' }}</strong>
+              </div>
+
+              <form class="form two-columns" (ngSubmit)="crearPedido()">
+                <label>
+                  Mesa
+                  <input name="modalPedidoMesa" [(ngModel)]="pedidoForm.mesa">
+                </label>
+                <label>
+                  Metodo pago
+                  <select name="modalPedidoMetodoPago" [(ngModel)]="pedidoForm.metodoPago">
+                    <option value="EFECTIVO">EFECTIVO</option>
+                    <option value="TARJETA">TARJETA</option>
+                    <option value="TRANSFERENCIA">TRANSFERENCIA</option>
+                  </select>
+                </label>
+                <label>
+                  Cantidad
+                  <input type="number" name="modalPedidoCantidad" [(ngModel)]="pedidoForm.cantidad" required>
+                </label>
+                <label>
+                  Impuesto
+                  <input type="number" step="0.01" name="modalPedidoImpuesto" [(ngModel)]="pedidoForm.impuesto">
+                </label>
+                <label class="full">
+                  Notas
+                  <input name="modalPedidoNotas" [(ngModel)]="pedidoForm.notas">
+                </label>
+                <button type="submit" class="primary full">Crear pedido</button>
+              </form>
+            </ng-container>
+          </section>
+        </div>
       </section>
     </div>
   </ng-template>
