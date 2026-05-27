@@ -369,7 +369,7 @@
 .analytics-grid,
 .bottom-grid {
   display: grid;
-  grid-template-columns: 3fr 2fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 24px;
 }
 
@@ -570,6 +570,14 @@
     #f1f5f9;
 }
 
+.pedido-icon {
+  background:
+    linear-gradient(#f97316 0 0) center 17px / 20px 2px no-repeat,
+    linear-gradient(#f97316 0 0) center 24px / 20px 2px no-repeat,
+    linear-gradient(#f97316 0 0) center 31px / 14px 2px no-repeat,
+    #f1f5f9;
+}
+
 .product-row h3,
 .mini-event h3 {
   margin: 0;
@@ -606,6 +614,18 @@
 
 .product-metrics small.danger {
   color: #f97316;
+}
+
+.product-metrics small.pending {
+  color: #f97316;
+}
+
+.product-metrics small.done {
+  color: #16a34a;
+}
+
+.product-metrics small.cancelled {
+  color: #64748b;
 }
 
 .mini-timeline {

@@ -1,4 +1,4 @@
-import { CurrencyPipe, DatePipe, JsonPipe, NgClass, NgFor, NgIf } from '@angular/common';
+import { CurrencyPipe, DatePipe, NgClass, NgFor, NgIf } from '@angular/common';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -56,7 +56,7 @@ const API = {
 
 @Component({
   selector: 'app-root',
-  imports: [CurrencyPipe, DatePipe, FormsModule, JsonPipe, NgClass, NgFor, NgIf],
+  imports: [CurrencyPipe, DatePipe, FormsModule, NgClass, NgFor, NgIf],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
@@ -233,6 +233,7 @@ export class AppComponent {
       this.state.cedula = this.loginForm.cedula;
       this.currentView = 'productos';
       this.addEvento('Sesion iniciada', `Cliente ${this.state.usuario.nombre || this.state.cedula} autenticado.`);
+      this.listarProductos();
     });
   }
 
@@ -311,7 +312,10 @@ export class AppComponent {
   }
 
   crearPedido(): void {
-    if (!this.state.cedula || !this.state.producto.productoId) {
+    const cedulaCliente = this.state.cedula || this.loginForm.cedula || this.usuarioForm.cedula;
+    const productoId = this.state.producto.productoId || this.numberOrZero(this.productoPedidoId);
+
+    if (!cedulaCliente || !productoId) {
       this.setOutput('Falta completar el flujo', {
         mensaje: 'Primero inicia sesion y selecciona un producto.'
       });
@@ -319,13 +323,13 @@ export class AppComponent {
     }
 
     const payload = {
-      cedulaCliente: this.state.cedula,
+      cedulaCliente,
       mesa: this.pedidoForm.mesa,
       metodoPago: this.pedidoForm.metodoPago,
       impuesto: this.numberOrZero(this.pedidoForm.impuesto),
       detalles: [
         {
-          productoId: this.state.producto.productoId,
+          productoId,
           cantidad: this.numberOrZero(this.pedidoForm.cantidad),
           notas: this.pedidoForm.notas
         }
