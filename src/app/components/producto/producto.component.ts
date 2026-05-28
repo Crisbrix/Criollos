@@ -168,7 +168,7 @@ export class ProductoComponent implements OnInit {
     this.loading = true;
     this.resultado = null;
 
-    this.request<any>('Eliminar producto', 'POST', `${API.productos}/eliminar/${this.productoSeleccionado.productoId}`, null, (response) => {
+    this.request<any>('Eliminar producto', 'DELETE', `${API.productos}/eliminar/${this.productoSeleccionado.productoId}`, null, (response) => {
       this.loading = false;
       this.resultado = {
         tipo: 'exito',
@@ -221,7 +221,7 @@ export class ProductoComponent implements OnInit {
 
   private request<T>(
     title: string,
-    method: 'GET' | 'POST' | 'PUT',
+    method: 'GET' | 'POST' | 'PUT' | 'DELETE',
     url: string,
     body: unknown,
     success: (data: T | null) => void
