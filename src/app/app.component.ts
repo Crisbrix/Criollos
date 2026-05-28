@@ -49,7 +49,7 @@ interface EventoTrazabilidad {
 }
 
 const API = {
-  auth: 'https://auth-j0i2.onrender.com/api/criollos/usuarios',
+  auth: 'https://authc.netlify.app',
   productos: 'https://producto-2fxd.onrender.com/productos',
   pedidos: 'https://pedidos-dg22.onrender.com/api/criollos/pedidos'
 };
@@ -90,25 +90,25 @@ export class AppComponent {
   containerTransform = 'perspective(1000px) rotateX(0deg) rotateY(0deg)';
 
   usuarioForm = {
-    cedula: '123456',
-    nombre: 'Ana',
-    apellido: 'Perez',
-    email: 'ana@test.com',
-    username: 'ana',
-    password: '123456',
+    cedula: '',
+    nombre: '',
+    apellido: '',
+    email: '',
+    username: '',
+    password: '',
     edad: 25,
-    telefono: '3001234567',
-    role: 'USER',
-    estado: 'ACTIVO'
+    telefono: '',
+    role: '',
+    estado: ''
   };
 
   productoForm = {
-    nombre: 'Arepa criolla',
-    descripcion: 'Arepa con queso',
-    precio: 8500,
-    stock: 20,
-    stockMinimo: 5,
-    categoria: 'Comida',
+    nombre: '',
+    descripcion: '',
+    precio: 0,
+    stock: 0,
+    stockMinimo: 0,
+    categoria: '',
     activo: true
   };
 
