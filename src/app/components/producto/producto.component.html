@@ -1,0 +1,230 @@
+<section class="module-content">
+  <header class="module-header">
+    <h2>Productos</h2>
+    <div class="header-stats">
+      <div class="stat">
+        <span class="label">Total</span>
+        <strong>{{ totalProductos }}</strong>
+      </div>
+      <div class="stat">
+        <span class="label">Stock</span>
+        <strong>{{ totalStock }}</strong>
+      </div>
+      <div class="stat alert">
+        <span class="label">Alertas</span>
+        <strong>{{ alertasActivas }}</strong>
+      </div>
+    </div>
+  </header>
+
+  <div class="module-body">
+    <div class="toolbar">
+      <div class="search-box">
+        <input
+          type="text"
+          placeholder="Buscar por ID..."
+          [(ngModel)]="productoBusquedaId"
+          name="productoBusqueda"
+        >
+        <button class="icon-btn" (click)="buscarProducto()" [disabled]="loading">
+          Buscar
+        </button>
+      </div>
+      <div class="toolbar-actions">
+        <button class="secondary" (click)="listarProductos()" [disabled]="loading">
+          Actualizar
+        </button>
+        <button class="success" (click)="abrirModalNuevo()" [disabled]="loading">
+          + Nuevo producto
+        </button>
+      </div>
+    </div>
+
+    <div *ngIf="resultado" class="resultado" [ngClass]="resultado.tipo === 'exito' ? 'resultado-exito' : 'resultado-error'">
+      <strong>{{ resultado.mensaje }}</strong>
+      <pre *ngIf="resultado.detalle">{{ resultado.detalle | json }}</pre>
+    </div>
+
+    <div *ngIf="loading" class="loading-overlay">
+      <div class="spinner-large"></div>
+    </div>
+
+    <div class="table-container">
+      <table class="data-table" *ngIf="productos.length; else emptyState">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Precio</th>
+            <th>Stock</th>
+            <th>Categoria</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let producto of productos" [class.selected]="selectedProduct.productoId === producto.productoId">
+            <td class="id-cell">#{{ producto.productoId }}</td>
+            <td class="name-cell">
+              <div class="product-name">{{ producto.nombre }}</div>
+              <div class="product-desc">{{ producto.descripcion }}</div>
+            </td>
+            <td class="price-cell">{{ producto.precio | currency }}</td>
+            <td>
+              <span class="stock-badge" [ngClass]="{ 'low': (producto.stock || 0) <= (producto.stockMinimo || 0) }">
+                {{ producto.stock }}
+              </span>
+            </td>
+            <td>{{ producto.categoria || 'N/A' }}</td>
+            <td>
+              <span class="status-badge" [ngClass]="producto.activo !== false ? 'active' : 'inactive'">
+                {{ producto.activo !== false ? 'Activo' : 'Inactivo' }}
+              </span>
+            </td>
+            <td class="actions-cell">
+              <button class="action-btn view" (click)="abrirModalVer(producto)" title="Ver detalle">Ver</button>
+              <button class="action-btn edit" (click)="abrirModalEditar(producto)" title="Editar">Editar</button>
+              <button class="action-btn delete" (click)="abrirModalEliminar(producto)" title="Eliminar">Eliminar</button>
+              <button class="action-btn select" (click)="seleccionarProducto(producto)" [class.selected]="selectedProduct.productoId === producto.productoId" title="Seleccionar">Sel</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <ng-template #emptyState>
+        <div class="empty-state">
+          <div class="empty-icon">[ ]</div>
+          <h3>No hay productos</h3>
+          <p>Crea un nuevo producto para comenzar</p>
+          <button class="success" (click)="abrirModalNuevo()">+ Nuevo producto</button>
+        </div>
+      </ng-template>
+    </div>
+  </div>
+
+  <!-- Modal Ver Producto -->
+  <ng-container *ngIf="activeModal === 'ver' && productoSeleccionado">
+    <div class="modal-overlay" (click)="cerrarModal()"></div>
+    <section class="modal">
+      <div class="modal-header">
+        <h3>Detalle del Producto</h3>
+        <button type="button" class="close-btn" (click)="cerrarModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="detail-grid">
+          <div class="detail-item">
+            <span class="label">ID</span>
+            <strong>#{{ productoSeleccionado.productoId }}</strong>
+          </div>
+          <div class="detail-item">
+            <span class="label">Nombre</span>
+            <strong>{{ productoSeleccionado.nombre }}</strong>
+          </div>
+          <div class="detail-item">
+            <span class="label">Precio</span>
+            <strong>{{ productoSeleccionado.precio | currency }}</strong>
+          </div>
+          <div class="detail-item">
+            <span class="label">Stock</span>
+            <strong [ngClass]="{ 'alert': (productoSeleccionado.stock || 0) <= (productoSeleccionado.stockMinimo || 0) }">
+              {{ productoSeleccionado.stock }}
+            </strong>
+          </div>
+          <div class="detail-item">
+            <span class="label">Stock Minimo</span>
+            <strong>{{ productoSeleccionado.stockMinimo }}</strong>
+          </div>
+          <div class="detail-item">
+            <span class="label">Categoria</span>
+            <strong>{{ productoSeleccionado.categoria || 'N/A' }}</strong>
+          </div>
+          <div class="detail-item full">
+            <span class="label">Descripcion</span>
+            <strong>{{ productoSeleccionado.descripcion || 'Sin descripcion' }}</strong>
+          </div>
+          <div class="detail-item">
+            <span class="label">Estado</span>
+            <span class="status-badge" [ngClass]="productoSeleccionado.activo !== false ? 'active' : 'inactive'">
+              {{ productoSeleccionado.activo !== false ? 'Activo' : 'Inactivo' }}
+            </span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="secondary" (click)="cerrarModal()">Cerrar</button>
+        <button class="primary" (click)="abrirModalEditar(productoSeleccionado)">Editar</button>
+      </div>
+    </section>
+  </ng-container>
+
+  <!-- Modal Nuevo/Editar Producto -->
+  <ng-container *ngIf="activeModal === 'nuevo' || activeModal === 'editar'">
+    <div class="modal-overlay" (click)="cerrarModal()"></div>
+    <section class="modal">
+      <div class="modal-header">
+        <h3>{{ activeModal === 'nuevo' ? 'Nuevo Producto' : 'Editar Producto' }}</h3>
+        <button type="button" class="close-btn" (click)="cerrarModal()">✕</button>
+      </div>
+      <form class="form two-columns" (ngSubmit)="activeModal === 'nuevo' ? guardarProducto() : actualizarProducto()">
+        <label>
+          Nombre *
+          <input type="text" name="modalProductoNombre" [(ngModel)]="productoForm.nombre" required>
+        </label>
+        <label>
+          Precio *
+          <input type="number" step="0.01" name="modalProductoPrecio" [(ngModel)]="productoForm.precio" required>
+        </label>
+        <label>
+          Stock *
+          <input type="number" name="modalProductoStock" [(ngModel)]="productoForm.stock" required>
+        </label>
+        <label>
+          Stock Minimo
+          <input type="number" name="modalProductoStockMinimo" [(ngModel)]="productoForm.stockMinimo">
+        </label>
+        <label>
+          Categoria
+          <input type="text" name="modalProductoCategoria" [(ngModel)]="productoForm.categoria">
+        </label>
+        <label class="full">
+          Descripcion
+          <textarea name="modalProductoDescripcion" [(ngModel)]="productoForm.descripcion" rows="3"></textarea>
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" name="modalProductoActivo" [(ngModel)]="productoForm.activo">
+          <span>Producto activo</span>
+        </label>
+        <div class="modal-footer full">
+          <button type="button" class="secondary" (click)="cerrarModal()">Cancelar</button>
+          <button type="submit" class="primary" [disabled]="loading">
+            {{ loading ? 'Guardando...' : (activeModal === 'nuevo' ? 'Crear Producto' : 'Actualizar') }}
+          </button>
+        </div>
+      </form>
+    </section>
+  </ng-container>
+
+  <!-- Modal Confirmar Eliminar -->
+  <ng-container *ngIf="activeModal === 'eliminar' && productoSeleccionado">
+    <div class="modal-overlay" (click)="cerrarModal()"></div>
+    <section class="modal modal-small">
+      <div class="modal-header">
+        <h3>Confirmar Eliminacion</h3>
+        <button type="button" class="close-btn" (click)="cerrarModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="confirm-content">
+          <div class="confirm-icon">!</div>
+          <p>Estas seguro de eliminar el producto?</p>
+          <strong>"{{ productoSeleccionado.nombre }}"</strong>
+          <p class="warning-text">Esta accion no se puede deshacer</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="secondary" (click)="cerrarModal()">Cancelar</button>
+        <button class="danger" (click)="eliminarProducto()" [disabled]="loading">
+          {{ loading ? 'Eliminando...' : 'Eliminar' }}
+        </button>
+      </div>
+    </section>
+  </ng-container>
+</section>

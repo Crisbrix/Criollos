@@ -1,92 +1,48 @@
-import { CurrencyPipe, DatePipe, NgClass, NgFor, NgIf } from '@angular/common';
+import { NgClass, NgFor, NgIf } from '@angular/common';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ProductoComponent } from './components/producto/producto.component';
+import { PedidoComponent } from './components/pedido/pedido.component';
+import { DashboardComponent } from './components/dashboard/dashboard.component';
+import { SharedService, UsuarioSesion } from './services/shared.service';
 
 type ViewName = 'login' | 'productos' | 'pedidos' | 'seguimiento';
 type AuthMode = 'login' | 'register';
-type ModalName = 'producto' | 'pedido' | null;
-
-interface UsuarioSesion {
-  email?: string;
-  nombre?: string;
-  role?: string;
-}
-
-interface Producto {
-  productoId?: number;
-  nombre?: string;
-  descripcion?: string;
-  precio?: number;
-  stock?: number;
-  stockMinimo?: number;
-  categoria?: string;
-  activo?: boolean;
-}
-
-interface Pedido {
-  numeroPedido?: string;
-  cedulaCliente?: string;
-  nombreCliente?: string;
-  mesa?: string;
-  metodoPago?: string;
-  estado?: string;
-  subtotal?: number;
-  impuesto?: number;
-  total?: number;
-  detalles?: Array<{
-    productoId?: number;
-    nombreProducto?: string;
-    cantidad?: number;
-    notas?: string;
-  }>;
-}
-
-interface EventoTrazabilidad {
-  hora: Date;
-  titulo: string;
-  detalle: string;
-}
 
 const API = {
-  auth: 'https://auth-j0i2.onrender.com/api/criollos/usuarios',
-  productos: 'https://producto-2fxd.onrender.com/productos',
-  pedidos: 'https://pedidos-dg22.onrender.com/api/criollos/pedidos'
+  auth: 'https://auth-j0i2.onrender.com/api/criollos/usuarios'
 };
 
 @Component({
   selector: 'app-root',
-  imports: [CurrencyPipe, DatePipe, FormsModule, NgClass, NgFor, NgIf],
+  imports: [
+    FormsModule,
+    NgClass,
+    NgFor,
+    NgIf,
+    ProductoComponent,
+    PedidoComponent,
+    DashboardComponent
+  ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
 export class AppComponent {
   private readonly http = inject(HttpClient);
+  private readonly sharedService = inject(SharedService);
 
   currentView: ViewName = 'login';
   authMode: AuthMode = 'login';
-  activeModal: ModalName = null;
-  outputTitle = 'Listo para probar';
-  output: unknown = {
-    ayuda: 'Servicios configurados en Render: Auth, Producto y Pedidos.'
-  };
-
-  state = {
-    token: '',
-    usuario: {} as UsuarioSesion,
-    cedula: '',
-    producto: {} as Producto,
-    ultimoPedido: {} as Pedido
-  };
+  outputTitle = 'Bienvenido';
+  output: unknown = { mensaje: 'Sistema de gestión Criollos' };
 
   loginForm = {
     email: 'ana@test.com',
-    password: '123456',
-    cedula: '123456'
+    password: '123456'
   };
 
   loginLoading = false;
-
   containerTransform = 'perspective(1000px) rotateX(0deg) rotateY(0deg)';
 
   usuarioForm = {
@@ -102,107 +58,30 @@ export class AppComponent {
     estado: ''
   };
 
-  productoForm = {
-    nombre: '',
-    descripcion: '',
-    precio: 0,
-    stock: 0,
-    stockMinimo: 0,
-    categoria: '',
-    activo: true
-  };
-
-  pedidoForm = {
-    mesa: '1',
-    metodoPago: 'EFECTIVO',
-    cantidad: 1,
-    impuesto: 0,
-    notas: 'Sin picante'
-  };
-
-  productoBusquedaId = '1';
-  productoPedidoId = '';
-  pedidoBusquedaNumero = '';
-  estadoFiltro = 'PENDIENTE';
-  productos: Producto[] = [];
-  pedidos: Pedido[] = [];
-  eventos: EventoTrazabilidad[] = [];
+  get state() {
+    return this.sharedService.getState();
+  }
 
   readonly steps = [
     {
-      label: 'Login',
-      view: 'login' as ViewName,
-      done: () => Boolean(this.state.token),
-      detail: () => this.state.usuario.nombre || 'Usuario pendiente'
+      label: 'Dashboard',
+      view: 'seguimiento' as ViewName
     },
     {
-      label: 'Producto',
-      view: 'productos' as ViewName,
-      done: () => Boolean(this.state.producto.productoId),
-      detail: () => this.state.producto.nombre || 'Inventario pendiente'
+      label: 'Productos',
+      view: 'productos' as ViewName
     },
     {
-      label: 'Pedido',
-      view: 'pedidos' as ViewName,
-      done: () => Boolean(this.state.ultimoPedido.numeroPedido),
-      detail: () => this.state.ultimoPedido.numeroPedido || 'Pedido pendiente'
-    },
-    {
-      label: 'Seguimiento',
-      view: 'seguimiento' as ViewName,
-      done: () => this.eventos.length > 0,
-      detail: () => `${this.eventos.length} eventos`
+      label: 'Pedidos',
+      view: 'pedidos' as ViewName
     }
   ];
-
-  get totalProductos(): number {
-    const loaded = this.productos.length;
-    return loaded || (this.state.producto.productoId ? 1 : 0);
-  }
-
-  get totalStock(): number {
-    const productos = this.productos.length ? this.productos : (this.state.producto.productoId ? [this.state.producto] : []);
-    return productos.reduce((total, producto) => total + this.numberOrZero(producto.stock), 0);
-  }
-
-  get alertasActivas(): number {
-    const productos = this.productos.length ? this.productos : (this.state.producto.productoId ? [this.state.producto] : []);
-    return productos.filter((producto) => this.numberOrZero(producto.stock) <= this.numberOrZero(producto.stockMinimo)).length;
-  }
-
-  get ultimosPedidos(): Pedido[] {
-    return (this.pedidos.length ? this.pedidos : (this.state.ultimoPedido.numeroPedido ? [this.state.ultimoPedido] : [])).slice(0, 3);
-  }
-
-  get productosResumen(): Producto[] {
-    return (this.productos.length ? this.productos : (this.state.producto.productoId ? [this.state.producto] : [])).slice(0, 3);
-  }
-
-  get eventosDashboard(): EventoTrazabilidad[] {
-    return this.eventos.slice(0, 3);
-  }
 
   estadoClase(estado?: string): string {
     const normalized = (estado || '').toUpperCase();
     if (normalized === 'ENTREGADO') return 'done';
     if (normalized === 'CANCELADO' || normalized === 'ANULADO') return 'cancelled';
     return 'pending';
-  }
-
-  abrirModalProducto(): void {
-    this.activeModal = 'producto';
-  }
-
-  abrirModalPedido(): void {
-    this.activeModal = 'pedido';
-    this.productoPedidoId = this.state.producto.productoId ? String(this.state.producto.productoId) : '';
-    if (!this.productos.length) {
-      this.listarProductos();
-    }
-  }
-
-  cerrarModal(): void {
-    this.activeModal = null;
   }
 
   crearUsuario(): void {
@@ -215,7 +94,6 @@ export class AppComponent {
       if (!usuario) return;
       this.loginForm.email = payload.email;
       this.loginForm.password = payload.password;
-      this.loginForm.cedula = payload.cedula;
       this.authMode = 'login';
     });
   }
@@ -228,17 +106,53 @@ export class AppComponent {
     }, (data) => {
       this.loginLoading = false;
       if (!data?.token) return;
-      this.state.token = data.token;
-      this.state.usuario = data.usuario || {};
-      this.state.cedula = this.loginForm.cedula;
-      this.currentView = 'productos';
-      this.addEvento('Sesion iniciada', `Cliente ${this.state.usuario.nombre || this.state.cedula} autenticado.`);
-      this.listarProductos();
+      console.log('Datos del login:', data);
+      console.log('Usuario recibido:', data.usuario);
+
+      // Decodificar token JWT para obtener datos
+      try {
+        const tokenPayload = JSON.parse(atob(data.token.split('.')[1]));
+        console.log('Token decodificado:', tokenPayload);
+      } catch (e) {
+        console.log('Error al decodificar token:', e);
+      }
+
+      // Guardar token primero
+      this.sharedService.updateState({
+        token: data.token,
+        usuario: data.usuario || {},
+        cedula: data.usuario?.cedula || ''
+      });
+
+      // Intentar buscar usuario por email
+      const headers = new HttpHeaders({
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${data.token}`
+      });
+
+      this.http.get<UsuarioSesion>(`${API.auth}/buscar/${encodeURIComponent(this.loginForm.email)}`, { headers })
+        .subscribe({
+          next: (usuarioCompleto) => {
+            console.log('Usuario completo:', usuarioCompleto);
+            if (usuarioCompleto && usuarioCompleto.id) {
+              this.sharedService.updateState({
+                token: data.token,
+                usuario: usuarioCompleto || data.usuario || {},
+                cedula: usuarioCompleto?.cedula || data.usuario?.cedula || ''
+              });
+            }
+            this.currentView = 'productos';
+          },
+          error: (error) => {
+            console.log('Error al buscar usuario:', error);
+            // Si falla, continuar con los datos del login
+            this.currentView = 'productos';
+          }
+        });
     });
   }
 
   socialLogin(provider: string): void {
-    this.addEvento('Social login', `Iniciando sesión con ${provider}`);
     this.setOutput(`Social login: ${provider}`, { mensaje: `Simulado: ${provider}` });
   }
 
@@ -262,135 +176,14 @@ export class AppComponent {
     this.containerTransform = 'perspective(1000px) rotateX(0deg) rotateY(0deg)';
   }
 
-  guardarProducto(): void {
-    const payload = {
-      ...this.productoForm,
-      precio: this.numberOrZero(this.productoForm.precio),
-      stock: this.numberOrZero(this.productoForm.stock),
-      stockMinimo: this.numberOrZero(this.productoForm.stockMinimo),
-      activo: Boolean(this.productoForm.activo)
-    };
-
-    this.request<Producto>('Guardar producto', 'POST', `${API.productos}/guardar`, payload, (producto) => {
-      if (!producto?.productoId) return;
-      this.seleccionarProducto(producto);
-      this.currentView = 'pedidos';
-      this.cerrarModal();
-    });
-  }
-
-  buscarProducto(): void {
-    if (!this.productoBusquedaId) return;
-    this.request<Producto>('Buscar producto', 'GET', `${API.productos}/buscar/${encodeURIComponent(this.productoBusquedaId)}`, null, (producto) => {
-      if (!producto?.productoId) return;
-      this.seleccionarProducto(producto);
-      this.currentView = 'pedidos';
-    });
-  }
-
-  listarProductos(): void {
-    this.request<Producto[]>('Listar productos', 'GET', `${API.productos}/todos`, null, (productos) => {
-      this.productos = Array.isArray(productos) ? productos : [];
-    });
-  }
-
-  seleccionarProducto(producto: Producto): void {
-    this.state.producto = producto || {};
-    if (!producto?.productoId) return;
-    this.productoBusquedaId = String(producto.productoId);
-    this.productoPedidoId = String(producto.productoId);
-    this.addEvento('Producto seleccionado', `${producto.nombre} #${producto.productoId}`);
-  }
-
-  seleccionarProductoPorId(productoId: string): void {
-    this.productoPedidoId = productoId;
-    const id = Number(productoId);
-    const producto = this.productos.find((item) => item.productoId === id);
-    if (producto) {
-      this.seleccionarProducto(producto);
-    }
-  }
-
-  crearPedido(): void {
-    const cedulaCliente = this.state.cedula || this.loginForm.cedula || this.usuarioForm.cedula;
-    const productoId = this.state.producto.productoId || this.numberOrZero(this.productoPedidoId);
-
-    if (!cedulaCliente || !productoId) {
-      this.setOutput('Falta completar el flujo', {
-        mensaje: 'Primero inicia sesion y selecciona un producto.'
-      });
-      return;
-    }
-
-    const payload = {
-      cedulaCliente,
-      mesa: this.pedidoForm.mesa,
-      metodoPago: this.pedidoForm.metodoPago,
-      impuesto: this.numberOrZero(this.pedidoForm.impuesto),
-      detalles: [
-        {
-          productoId,
-          cantidad: this.numberOrZero(this.pedidoForm.cantidad),
-          notas: this.pedidoForm.notas
-        }
-      ]
-    };
-
-    this.request<Pedido>('Crear pedido', 'POST', `${API.pedidos}/guardar`, payload, (pedido) => {
-      if (!pedido?.numeroPedido) return;
-      this.seleccionarPedido(pedido);
-      this.currentView = 'seguimiento';
-      this.cerrarModal();
-    });
-  }
-
-  buscarPedido(): void {
-    if (!this.pedidoBusquedaNumero) return;
-    this.request<Pedido>('Buscar pedido', 'GET', `${API.pedidos}/buscar/${encodeURIComponent(this.pedidoBusquedaNumero)}`, null, (pedido) => {
-      if (pedido?.numeroPedido) this.seleccionarPedido(pedido);
-    });
-  }
-
-  listarPedidos(): void {
-    this.request<Pedido[]>('Listar pedidos', 'GET', `${API.pedidos}/listar`, null, (pedidos) => {
-      this.pedidos = Array.isArray(pedidos) ? pedidos : [];
-    });
-  }
-
-  listarPedidosPorEstado(): void {
-    this.request<Pedido[]>('Filtrar pedidos por estado', 'GET', `${API.pedidos}/listar/estado/${encodeURIComponent(this.estadoFiltro)}`, null, (pedidos) => {
-      this.pedidos = Array.isArray(pedidos) ? pedidos : [];
-    });
-  }
-
-  seleccionarPedido(pedido: Pedido): void {
-    this.state.ultimoPedido = pedido || {};
-    if (!pedido?.numeroPedido) return;
-    this.pedidoBusquedaNumero = pedido.numeroPedido;
-    this.addEvento('Pedido en trazabilidad', `${pedido.numeroPedido} - ${pedido.estado || 'SIN_ESTADO'}`);
-  }
-
-  limpiarEventos(): void {
-    this.eventos = [];
-  }
-
-  clearOutput(): void {
-    this.setOutput('Listo para probar', {
-      mensaje: 'Selecciona un modulo para continuar.'
-    });
-  }
-
   reset(): void {
-    this.state = {
+    this.sharedService.setState({
       token: '',
       usuario: {},
       cedula: '',
       producto: {},
       ultimoPedido: {}
-    };
-    this.productos = [];
-    this.pedidos = [];
-    this.eventos = [];
+    });
     this.currentView = 'login';
     this.authMode = 'login';
     this.setOutput('Flujo reiniciado', {
@@ -411,7 +204,6 @@ export class AppComponent {
     }).subscribe({
       next: (data) => {
         this.setOutput(`${title} (OK)`, data);
-        this.addEvento(title, 'Operacion completada correctamente.');
         success(data);
       },
       error: (error) => {
@@ -422,7 +214,6 @@ export class AppComponent {
           status: error.status
         };
         this.setOutput(title, data);
-        this.addEvento(title, data.mensaje || 'Error de comunicacion');
         success(null);
       }
     });
@@ -439,13 +230,6 @@ export class AppComponent {
   private setOutput(title: string, data: unknown): void {
     this.outputTitle = title;
     this.output = data || {};
-  }
-
-  private addEvento(titulo: string, detalle: string): void {
-    this.eventos = [
-      { hora: new Date(), titulo, detalle },
-      ...this.eventos
-    ];
   }
 
   private numberOrZero(value: unknown): number {

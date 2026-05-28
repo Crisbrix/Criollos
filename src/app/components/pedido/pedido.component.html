@@ -1,0 +1,179 @@
+<section class="module-content">
+  <header class="module-header">
+    <h2>Pedidos</h2>
+    <div class="header-stats">
+      <div class="stat">
+        <span class="label">Total</span>
+        <strong>{{ pedidos.length }}</strong>
+      </div>
+      <div class="stat">
+        <span class="label">Estado Filtro</span>
+        <strong>{{ estadoFiltro }}</strong>
+      </div>
+    </div>
+  </header>
+
+  <div class="module-body">
+    <div class="search-section">
+      <input
+        type="text"
+        placeholder="Buscar por numero de pedido"
+        [(ngModel)]="pedidoBusquedaNumero"
+        name="pedidoBusqueda"
+      >
+      <button class="primary" (click)="buscarPedido()">Buscar</button>
+      <button class="secondary" (click)="listarPedidos()">Listar todos</button>
+      <select [(ngModel)]="estadoFiltro" name="estadoFiltro" (change)="listarPedidosPorEstado()">
+        <option value="PENDIENTE">Pendiente</option>
+        <option value="EN_PROCESO">En Proceso</option>
+        <option value="ENTREGADO">Entregado</option>
+        <option value="CANCELADO">Cancelado</option>
+      </select>
+      <button class="success" (click)="abrirModal()" [disabled]="!state.token">
+        + Nuevo pedido
+      </button>
+    </div>
+
+    <div *ngIf="resultado" class="resultado" [ngClass]="resultado.tipo === 'exito' ? 'resultado-exito' : 'resultado-error'">
+      <strong>{{ resultado.mensaje }}</strong>
+      <pre *ngIf="resultado.detalle">{{ resultado.detalle | json }}</pre>
+    </div>
+
+    <div *ngIf="loading" class="loading-overlay">
+      <div class="spinner-large"></div>
+    </div>
+
+    <div class="orders-table">
+      <table *ngIf="ultimosPedidos.length; else emptyOrders">
+        <thead>
+          <tr>
+            <th>Numero</th>
+            <th>Cliente</th>
+            <th>Mesa</th>
+            <th>Total</th>
+            <th>Estado</th>
+            <th>Metodo Pago</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let pedido of ultimosPedidos" (click)="seleccionarPedido(pedido)" class="clickable">
+            <td class="numero">{{ pedido.numeroPedido }}</td>
+            <td>{{ pedido.nombreCliente || pedido.cedulaCliente }}</td>
+            <td>{{ pedido.mesa }}</td>
+            <td class="monto">{{ pedido.total | currency }}</td>
+            <td>
+              <span class="badge" [ngClass]="'estado-' + (pedido.estado || 'pendiente').toLowerCase()">
+                {{ pedido.estado || 'PENDIENTE' }}
+              </span>
+            </td>
+            <td>{{ pedido.metodoPago }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <ng-template #emptyOrders>
+        <p class="empty">No hay pedidos para mostrar.</p>
+      </ng-template>
+    </div>
+  </div>
+
+  <!-- Modal de nuevo pedido -->
+  <ng-container *ngIf="activeModal === 'pedido'">
+    <div class="modal-overlay" (click)="cerrarModal()"></div>
+    <section class="modal">
+      <div class="modal-header">
+        <h3>Nuevo Pedido</h3>
+        <button type="button" class="close-btn" (click)="cerrarModal()">✕</button>
+      </div>
+
+      <div class="summary modal-summary">
+        <span>Cliente</span>
+        <strong>{{ state.usuario.nombre || 'Sin login' }} - {{ state.cedula || 'sin cedula' }}</strong>
+      </div>
+
+      <!-- Sección para agregar productos al carrito -->
+      <div class="agregar-producto-section">
+        <h4>Productos Disponibles</h4>
+        <div class="productos-grid">
+          <button
+            *ngFor="let producto of productosDisponibles"
+            type="button"
+            class="producto-btn"
+            (click)="agregarAlCarrito(producto)"
+            [class.selected]="productoEnCarrito(producto.productoId || 0)"
+          >
+            <div class="producto-btn-info">
+              <strong>{{ producto.nombre }}</strong>
+              <span>{{ producto.precio | currency }}</span>
+              <span *ngIf="productoEnCarrito(producto.productoId || 0)" class="cantidad-badge">
+                {{ getCantidadProducto(producto.productoId || 0) }}
+              </span>
+            </div>
+          </button>
+        </div>
+        <div *ngIf="productosDisponibles.length === 0" class="empty">Cargando productos...</div>
+      </div>
+
+      <!-- Carrito de productos -->
+      <div class="carrito-section">
+        <h4>Carrito ({{ carrito.length }} productos)</h4>
+        <div *ngIf="carrito.length === 0" class="empty">No hay productos en el carrito</div>
+        <div *ngFor="let item of carrito; let i = index" class="carrito-item">
+          <div class="carrito-item-info">
+            <strong>{{ item.nombreProducto }}</strong>
+            <span>{{ item.cantidad }} x {{ item.precioUnitario | currency }} = {{ item.subtotal | currency }}</span>
+            <span *ngIf="item.notas" class="notas">Notas: {{ item.notas }}</span>
+          </div>
+          <button type="button" class="danger" (click)="eliminarDelCarrito(i)">✕</button>
+        </div>
+        <div class="summary" *ngIf="carrito.length > 0">
+          <div class="detail total">
+            <span>Subtotal carrito:</span>
+            <strong>{{ totalCarrito | currency }}</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Formulario del pedido -->
+      <form class="form two-columns" (ngSubmit)="crearPedido()">
+        <label>
+          Cedula Cliente *
+          <input name="modalPedidoCedula" [(ngModel)]="pedidoForm.cedulaCliente" required placeholder="Ingresa tu cedula">
+        </label>
+        <label>
+          Mesa
+          <input name="modalPedidoMesa" [(ngModel)]="pedidoForm.mesa" required>
+        </label>
+        <label>
+          Metodo pago
+          <select name="modalPedidoMetodoPago" [(ngModel)]="pedidoForm.metodoPago" required>
+            <option value="EFECTIVO">EFECTIVO</option>
+            <option value="TARJETA">TARJETA</option>
+            <option value="TRANSFERENCIA">TRANSFERENCIA</option>
+          </select>
+        </label>
+        <label>
+          Impuesto
+          <input type="number" step="0.01" name="modalPedidoImpuesto" [(ngModel)]="pedidoForm.impuesto">
+        </label>
+        <div class="summary full">
+          <div class="detail">
+            <span>Subtotal:</span>
+            <strong>{{ totalCarrito | currency }}</strong>
+          </div>
+          <div class="detail">
+            <span>Impuesto:</span>
+            <strong>{{ pedidoForm.impuesto | currency }}</strong>
+          </div>
+          <div class="detail total">
+            <span>Total:</span>
+            <strong>{{ (totalCarrito + pedidoForm.impuesto) | currency }}</strong>
+          </div>
+        </div>
+        <button type="submit" class="primary full" [disabled]="loading || carrito.length === 0 || !pedidoForm.cedulaCliente">
+          <span *ngIf="loading" class="spinner"></span>
+          {{ loading ? 'Creando pedido...' : 'Crear pedido' }}
+        </button>
+      </form>
+    </section>
+  </ng-container>
+</section>

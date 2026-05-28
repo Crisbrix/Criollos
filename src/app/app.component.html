@@ -1,5 +1,6 @@
 <main class="app">
-  <ng-container *ngIf="!state.token; else dashboard">
+  <!-- Login Screen -->
+  <ng-container *ngIf="!state.token; else loggedIn">
     <section class="login-screen">
       <div class="login-bg">
         <div class="bg-shape"></div>
@@ -9,22 +10,18 @@
         <div class="login-container" [ngClass]="{ 'register-container': authMode === 'register' }" [style.transform]="containerTransform" (mousemove)="onMouseMove($event)" (mouseleave)="onMouseLeave()">
           <div class="login-header">
             <div class="logo-container">
-              <div class="logo">
-                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M30 15 C25 15, 20 20, 20 25 L20 45 C20 50, 25 55, 30 55 L35 55 L35 75 C35 80, 40 85, 45 85 L55 85 C60 85, 65 80, 65 75 L65 55 L70 55 C75 55, 80 50, 80 45 L80 25 C80 20, 75 15, 70 15 L30 15 Z M35 25 L45 25 L45 45 L35 45 L35 25 Z M55 25 L65 25 L65 45 L55 45 L55 25 Z"/>
-                </svg>
-              </div>
+              <div class="logo">C</div>
               <h1 class="login-title">Criollo S</h1>
             </div>
-            <p class="login-subtitle">Inicia sesión en tu cuenta</p>
+            <p class="login-subtitle">{{ authMode === 'login' ? 'Inicia sesión' : 'Crea tu cuenta' }}</p>
           </div>
 
-          <form *ngIf="authMode === 'login'" id="loginForm" (ngSubmit)="login()" class="form">
+          <!-- LOGIN FORM -->
+          <form *ngIf="authMode === 'login'" (ngSubmit)="login()" class="form">
             <div class="form-group">
               <input type="email" class="form-input" placeholder=" " name="loginEmail" [(ngModel)]="loginForm.email" required>
               <label class="form-label">Correo electrónico</label>
             </div>
-
             <div class="form-group">
               <input type="password" class="form-input" placeholder=" " name="loginPassword" [(ngModel)]="loginForm.password" required>
               <label class="form-label">Contraseña</label>
@@ -35,516 +32,120 @@
                 <input type="checkbox" name="rememberMe">
                 Recordarme
               </label>
-              <a href="#" class="forgot-password">¿Olvidaste tu contraseña?</a>
+              <button type="button" class="forgot-password">¿Olvidaste tu contraseña?</button>
             </div>
 
             <button type="submit" class="login-btn" [disabled]="loginLoading">
-              <span class="btn-text">Iniciar Sesión</span>
-              <div class="loading" *ngIf="loginLoading">
-                <div class="spinner"></div>
-              </div>
-            </button>
-          </form>
-
-          <form *ngIf="authMode === 'register'" id="registerForm" (ngSubmit)="crearUsuario()" class="form register-form">
-            <div class="form-grid">
-              <div class="form-group">
-                <input class="form-input" placeholder=" " name="cedula" [(ngModel)]="usuarioForm.cedula" required>
-                <label class="form-label">Cedula</label>
-              </div>
-
-              <div class="form-group">
-                <input class="form-input" placeholder=" " name="username" [(ngModel)]="usuarioForm.username" required>
-                <label class="form-label">Usuario</label>
-              </div>
-
-              <div class="form-group">
-                <input class="form-input" placeholder=" " name="nombre" [(ngModel)]="usuarioForm.nombre">
-                <label class="form-label">Nombre</label>
-              </div>
-
-              <div class="form-group">
-                <input class="form-input" placeholder=" " name="apellido" [(ngModel)]="usuarioForm.apellido">
-                <label class="form-label">Apellido</label>
-              </div>
-
-              <div class="form-group full-field">
-                <input type="email" class="form-input" placeholder=" " name="email" [(ngModel)]="usuarioForm.email" required>
-                <label class="form-label">Correo electronico</label>
-              </div>
-
-              <div class="form-group">
-                <input type="password" class="form-input" placeholder=" " name="password" [(ngModel)]="usuarioForm.password" required>
-                <label class="form-label">Contrasena</label>
-              </div>
-
-              <div class="form-group">
-                <input type="number" class="form-input" placeholder=" " name="edad" [(ngModel)]="usuarioForm.edad">
-                <label class="form-label">Edad</label>
-              </div>
-
-              <div class="form-group">
-                <input class="form-input" placeholder=" " name="telefono" [(ngModel)]="usuarioForm.telefono">
-                <label class="form-label">Telefono</label>
-              </div>
-
-              <div class="form-group">
-                <select class="form-input" name="role" [(ngModel)]="usuarioForm.role">
-                  <option value="USER">USER</option>
-                  <option value="ADMIN">ADMIN</option>
-                </select>
-                <label class="form-label lifted">Rol</label>
-              </div>
-
-              <div class="form-group full-field">
-                <select class="form-input" name="estado" [(ngModel)]="usuarioForm.estado">
-                  <option value="ACTIVO">ACTIVO</option>
-                  <option value="INACTIVO">INACTIVO</option>
-                </select>
-                <label class="form-label lifted">Estado</label>
-              </div>
-            </div>
-
-            <button type="submit" class="login-btn">
-              <span class="btn-text">Registrarme</span>
+              <span class="btn-text" [style.opacity]="loginLoading ? '0' : '1'">Iniciar Sesión</span>
+              <div class="loading" *ngIf="loginLoading"><div class="spinner"></div></div>
             </button>
           </form>
 
           <div class="social-login" *ngIf="authMode === 'login'">
             <p class="social-text">O continúa con</p>
             <div class="social-buttons">
-              <button class="social-btn" type="button" (click)="socialLogin('google')">G</button>
-              <button class="social-btn" type="button" (click)="socialLogin('facebook')">F</button>
-              <button class="social-btn" type="button" (click)="socialLogin('twitter')">T</button>
+              <button type="button" class="social-btn" (click)="socialLogin('Google')">G</button>
+              <button type="button" class="social-btn" (click)="socialLogin('Facebook')">F</button>
+              <button type="button" class="social-btn" (click)="socialLogin('Twitter')">T</button>
             </div>
           </div>
 
-          <div class="signup-link" *ngIf="false">
-            ¿No tienes una cuenta? <a href="#">Regístrate aquí</a>
-          </div>
+          <!-- REGISTER FORM -->
+          <form *ngIf="authMode === 'register'" (ngSubmit)="crearUsuario()" class="form register-form">
+            <div class="form-grid">
+              <div class="form-group">
+                <input class="form-input" placeholder=" " name="cedula" [(ngModel)]="usuarioForm.cedula" required>
+                <label class="form-label">Cedula</label>
+              </div>
+              <div class="form-group">
+                <input class="form-input" placeholder=" " name="nombre" [(ngModel)]="usuarioForm.nombre" required>
+                <label class="form-label">Nombre</label>
+              </div>
+              <div class="form-group">
+                <input class="form-input" placeholder=" " name="apellido" [(ngModel)]="usuarioForm.apellido">
+                <label class="form-label">Apellido</label>
+              </div>
+              <div class="form-group">
+                <input class="form-input" placeholder=" " name="username" [(ngModel)]="usuarioForm.username">
+                <label class="form-label">Username</label>
+              </div>
+              <div class="form-group full-field">
+                <input type="email" class="form-input" placeholder=" " name="email" [(ngModel)]="usuarioForm.email" required>
+                <label class="form-label">Email</label>
+              </div>
+              <div class="form-group">
+                <input type="password" class="form-input" placeholder=" " name="password" [(ngModel)]="usuarioForm.password" required>
+                <label class="form-label">Contraseña</label>
+              </div>
+              <div class="form-group">
+                <input type="number" class="form-input" placeholder=" " name="edad" [(ngModel)]="usuarioForm.edad">
+                <label class="form-label">Edad</label>
+              </div>
+              <div class="form-group">
+                <input type="tel" class="form-input" placeholder=" " name="telefono" [(ngModel)]="usuarioForm.telefono">
+                <label class="form-label">Teléfono</label>
+              </div>
+              <div class="form-group">
+                <input class="form-input" placeholder=" " name="role" [(ngModel)]="usuarioForm.role">
+                <label class="form-label">Rol</label>
+              </div>
+              <div class="form-group">
+                <input class="form-input" placeholder=" " name="estado" [(ngModel)]="usuarioForm.estado">
+                <label class="form-label">Estado</label>
+              </div>
+            </div>
+            <button type="submit" class="login-btn">Registrarse</button>
+          </form>
 
-          <div class="signup-link" *ngIf="authMode === 'login'">
-            No tienes una cuenta?
-            <button type="button" class="text-link" (click)="authMode = 'register'">Registrate aqui</button>
-          </div>
-
-          <div class="signup-link" *ngIf="authMode === 'register'">
-            Ya tienes una cuenta?
-            <button type="button" class="text-link" (click)="authMode = 'login'">Inicia sesion</button>
+          <!-- Auth Mode Toggle -->
+          <div class="signup-link">
+            <ng-container *ngIf="authMode === 'login'">
+              ¿No tienes cuenta? <button type="button" class="text-link" (click)="authMode = 'register'">Regístrate</button>
+            </ng-container>
+            <ng-container *ngIf="authMode === 'register'">
+              ¿Ya tienes cuenta? <button type="button" class="text-link" (click)="authMode = 'login'">Inicia sesión</button>
+            </ng-container>
           </div>
         </div>
       </div>
     </section>
   </ng-container>
 
-  <ng-template #dashboard>
-    <div class="dashboard-shell">
-      <aside class="sidebar">
-        <div>
-          <div class="brand-sidebar">
-            <div class="brand-heading">
-              <div class="brand-mark">P</div>
-              <div>
-                <span class="eyebrow">POS</span>
-                <h2>Criollo S</h2>
-              </div>
-            </div>
-            <p>Gestiona inventario y pedidos desde un panel simple.</p>
-          </div>
+  <!-- Main Application -->
+  <ng-template #loggedIn>
+    <!-- Animated background shapes -->
+    <div class="bg-shape"></div>
+    <div class="bg-shape"></div>
+    <div class="bg-shape"></div>
 
-          <nav class="menu" aria-label="Menú principal">
-            <button type="button" [ngClass]="{ active: currentView === 'productos' }" (click)="currentView = 'productos'">
-              <span class="menu-label">Productos</span>
-            </button>
-            <button type="button" [ngClass]="{ active: currentView === 'pedidos' }" (click)="currentView = 'pedidos'">
-              <span class="menu-label">Pedidos</span>
-            </button>
-            <button type="button" [ngClass]="{ active: currentView === 'seguimiento' }" (click)="currentView = 'seguimiento'">
-              <span class="menu-label">Seguimiento</span>
-            </button>
-          </nav>
+    <div class="logged-in-layout">
+      <!-- Sidebar Navigation -->
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <h2>Criollo S</h2>
         </div>
 
-        <div class="sidebar-footer">
-          <div class="profile-card">
-            <div class="avatar">A</div>
-            <div>
-              <p class="profile-name">Admin Usuario</p>
-              <p class="profile-meta">Sesion activa</p>
-            </div>
+        <nav class="nav-steps">
+          <button *ngFor="let step of steps" class="nav-step" [class.active]="currentView === step.view" (click)="currentView = step.view">
+            <span>{{ step.label }}</span>
+          </button>
+        </nav>
+
+        <div class="user-card">
+          <div class="avatar">{{ (state.usuario.nombre || 'U').charAt(0) }}</div>
+          <div>
+            <p class="user-name">{{ state.usuario.nombre || 'Usuario' }}</p>
+            <p class="user-email">{{ state.usuario.email || 'email@test.com' }}</p>
           </div>
-          <button type="button" class="ghost logout" (click)="reset()">Cerrar sesion</button>
+          <button type="button" class="logout-btn" (click)="reset()">X</button>
         </div>
       </aside>
 
-      <section class="dashboard-main">
-        <header class="premium-header">
-          <div class="brand-lockup">
-            <div class="brand-mark">P</div>
-            <div>
-              <div class="brand-title">
-                <span>Criollos <span>Sistema POS</span></span>
-                <small>Dashboard</small>
-              </div>
-              <p>Gestion de inventario y pedidos en tiempo real</p>
-            </div>
-          </div>
-
-          <div class="header-actions">
-            <button type="button" class="primary action-button" (click)="abrirModalPedido()">
-              <span class="action-icon">+</span>
-              Nueva Pedido
-            </button>
-            <button type="button" class="primary action-button" (click)="abrirModalProducto()">
-              <span class="action-icon">+</span>
-              Nuevo producto
-            </button>
-            <div class="user-chip">
-              <div class="avatar">{{ (state.usuario.nombre || state.usuario.email || 'U').charAt(0) }}</div>
-              <div>
-                <p>{{ state.usuario.nombre || 'User POS' }}</p>
-                <span>{{state.usuario.email}}</span>
-              </div>
-            </div>
-            <button type="button" class="ghost logout" (click)="reset()">Salir</button>
-          </div>
-        </header>
-
-        <section class="kpi-grid">
-          <article class="kpi-card">
-            <div>
-              <p>Pedidos hoy</p>
-              <strong>{{ pedidos.length }}</strong>
-              <span class="metric-positive">API Pedidos activa</span>
-            </div>
-            <div class="kpi-icon cart-icon"></div>
-          </article>
-
-          <article class="kpi-card">
-            <div>
-              <p>Productos totales</p>
-              <strong>{{ totalProductos }}</strong>
-              <span class="metric-neutral">Catalogo sincronizado</span>
-            </div>
-            <div class="kpi-icon package-icon"></div>
-          </article>
-
-          <article class="kpi-card">
-            <div>
-              <p>Stock disponible</p>
-              <strong>{{ totalStock }}</strong>
-              <span class="metric-positive">Unidades registradas</span>
-            </div>
-            <div class="kpi-icon award-icon"></div>
-          </article>
-
-          <article class="kpi-card">
-            <div>
-              <p>Alertas activas</p>
-              <strong>{{ alertasActivas }}</strong>
-              <span class="metric-danger">Requiere revision</span>
-            </div>
-            <div class="kpi-icon bell-icon">
-              <small>{{ alertasActivas }}</small>
-            </div>
-          </article>
-        </section>
-
-        <section class="analytics-grid">
-          <article class="dashboard-card chart-card">
-            <div class="section-heading">
-              <div>
-                <h2>Tendencia de Productos Mas Vendidos</h2>
-                <p>Flujo de salida por franja horaria hoy</p>
-              </div>
-              <select aria-label="Vista del grafico">
-                <option>Vista de Hoy</option>
-                <option>Semanal</option>
-              </select>
-            </div>
-            <div class="chart-shell" aria-label="Grafico de unidades vendidas">
-              <div class="chart-grid"></div>
-              <svg viewBox="0 0 640 240" role="img" aria-label="Tendencia de ventas">
-                <defs>
-                  <linearGradient id="orangeArea" x1="0" x2="0" y1="0" y2="1">
-                    <stop offset="0%" stop-color="#f97316" stop-opacity="0.24"></stop>
-                    <stop offset="100%" stop-color="#f97316" stop-opacity="0"></stop>
-                  </linearGradient>
-                </defs>
-                <path class="area" d="M0 178 C70 110 112 128 168 145 C225 164 255 72 320 92 C390 116 410 52 480 74 C548 96 572 40 640 58 L640 240 L0 240 Z"></path>
-                <path class="trend" d="M0 178 C70 110 112 128 168 145 C225 164 255 72 320 92 C390 116 410 52 480 74 C548 96 572 40 640 58"></path>
-                <circle cx="168" cy="145" r="5"></circle>
-                <circle cx="320" cy="92" r="5"></circle>
-                <circle cx="480" cy="74" r="5"></circle>
-                <circle cx="635" cy="58" r="5"></circle>
-              </svg>
-              <div class="chart-labels">
-                <span>09:00</span>
-                <span>13:00</span>
-                <span>17:00</span>
-                <span>21:00</span>
-              </div>
-            </div>
-          </article>
-
-          <article class="dashboard-card orders-card">
-            <div class="section-heading compact">
-              <div>
-                <h2>Ultimos Pedidos</h2>
-                <p>Monitoreo del flujo de salida</p>
-              </div>
-              <button type="button" class="text-action" (click)="listarPedidos()">Ver todos</button>
-            </div>
-            <div class="orders-table">
-              <div class="table-head">
-                <span>No. Pedido</span>
-                <span>Cliente</span>
-                <span>Estado</span>
-              </div>
-              <button type="button" class="table-row" *ngFor="let pedido of ultimosPedidos" (click)="seleccionarPedido(pedido)">
-                <strong>{{ pedido.numeroPedido || 'Nuevo' }}</strong>
-                <span>{{ pedido.nombreCliente || pedido.cedulaCliente || state.usuario.nombre || 'Cliente POS' }}</span>
-                <small [ngClass]="estadoClase(pedido.estado)">{{ pedido.estado || 'PENDIENTE' }}</small>
-              </button>
-              <p class="empty compact-empty" *ngIf="!ultimosPedidos.length">Carga pedidos para verlos aqui.</p>
-            </div>
-          </article>
-        </section>
-
-        <section class="bottom-grid">
-          <article class="dashboard-card inventory-card">
-            <div class="section-heading">
-              <div>
-                <h2>Inventario y Mas Vendidos</h2>
-                <p>Articulos de alta rotacion y control de stock bajo</p>
-              </div>
-              <button type="button" class="text-action" (click)="listarProductos()">Actualizar</button>
-            </div>
-            <div class="featured-products">
-              <button type="button" class="product-row" *ngFor="let producto of productosResumen" (click)="seleccionarProducto(producto)">
-                <div class="product-info">
-                  <div class="product-icon"></div>
-                  <div>
-                    <h3>{{ producto.nombre || 'Producto' }}</h3>
-                    <p>{{ producto.categoria || 'Categoria' }}</p>
-                  </div>
-                </div>
-                <div class="product-metrics">
-                  <span>{{ producto.stock || 0 }} unidades</span>
-                  <small [ngClass]="{ danger: (producto.stock || 0) <= (producto.stockMinimo || 0) }">
-                    {{ (producto.stock || 0) <= (producto.stockMinimo || 0) ? 'Stock critico' : 'Disponible' }}
-                  </small>
-                </div>
-              </button>
-              <p class="empty compact-empty" *ngIf="!productosResumen.length">Carga productos para ver inventario.</p>
-            </div>
-          </article>
-
-          <article class="dashboard-card pedidos-summary-card">
-            <div class="section-heading">
-              <div>
-                <h2>Pedidos Recientes</h2>
-                <p>Ordenes cargadas desde la API de pedidos</p>
-              </div>
-              <button type="button" class="text-action" (click)="listarPedidos()">Actualizar</button>
-            </div>
-            <div class="featured-products">
-              <button type="button" class="product-row pedido-row" *ngFor="let pedido of ultimosPedidos" (click)="seleccionarPedido(pedido)">
-                <div class="product-info">
-                  <div class="product-icon pedido-icon"></div>
-                  <div>
-                    <h3>{{ pedido.numeroPedido || 'Pedido' }}</h3>
-                    <p>{{ pedido.nombreCliente || pedido.cedulaCliente || 'Cliente POS' }}</p>
-                  </div>
-                </div>
-                <div class="product-metrics">
-                  <span>{{ pedido.total | currency:'$':'symbol':'1.0-0' }}</span>
-                  <small [ngClass]="estadoClase(pedido.estado)">
-                    {{ pedido.estado || 'PENDIENTE' }}
-                  </small>
-                </div>
-              </button>
-              <p class="empty compact-empty" *ngIf="!ultimosPedidos.length">Carga pedidos para ver el resumen.</p>
-            </div>
-          </article>
-
-          <article class="dashboard-card notifications-card">
-            <div class="section-heading compact">
-              <div>
-                <h2>Notificaciones del Sistema</h2>
-                <p>Historial de incidencias y estado de APIs</p>
-              </div>
-            </div>
-            <div class="mini-timeline">
-              <div class="mini-event stable">
-                <time>Online</time>
-                <div>
-                  <h3>Conexion de APIs estable</h3>
-                  <p>Auth, Pedidos y Productos operan normal.</p>
-                </div>
-              </div>
-              <div class="mini-event warning" *ngIf="alertasActivas">
-                <time>Stock</time>
-                <div>
-                  <h3>Alerta de stock minimo</h3>
-                  <p>{{ alertasActivas }} producto(s) requieren revision.</p>
-                </div>
-              </div>
-              <div class="mini-event" *ngFor="let evento of eventosDashboard">
-                <time>{{ evento.hora | date:'HH:mm' }}</time>
-                <div>
-                  <h3>{{ evento.titulo }}</h3>
-                  <p>{{ evento.detalle }}</p>
-                </div>
-              </div>
-            </div>
-          </article>
-        </section>
-
-
-        <header class="topbar">
-          <div>
-            <h1>Panel de Control</h1>
-            <p class="topbar-subtitle">Productos, pedidos y respuestas de API en un solo lugar.</p>
-          </div>
-          <div class="topbar-actions">
-            <span class="status-badge"><span></span>APIs Online</span>
-          </div>
-        </header>
-
-        <section class="dashboard-cards">
-          <article class="stat-card">
-            <div class="stat-card-header">
-              <span>Producto seleccionado</span>
-            </div>
-            <strong>{{ state.producto.nombre || 'Sin producto' }}</strong>
-            <p class="stat-note">{{ state.producto.productoId ? ('#' + state.producto.productoId) : 'Pendiente' }}</p>
-          </article>
-
-          <article class="stat-card">
-            <div class="stat-card-header">
-              <span>Pedidos cargados</span>
-            </div>
-            <strong>{{ pedidos.length }}</strong>
-            <p class="stat-note">Lista actual</p>
-          </article>
-
-          <article class="stat-card">
-            <div class="stat-card-header">
-              <span>Eventos</span>
-            </div>
-            <strong>{{ eventos.length }}</strong>
-            <p class="stat-note">Actividad del flujo</p>
-          </article>
-        </section>
-
-        <div class="modal-backdrop" *ngIf="activeModal" (click)="cerrarModal()">
-          <section class="quick-modal" (click)="$event.stopPropagation()">
-            <button type="button" class="modal-close" aria-label="Cerrar modal" (click)="cerrarModal()">x</button>
-
-            <ng-container *ngIf="activeModal === 'producto'">
-              <div class="modal-heading">
-                <p class="eyebrow">Producto</p>
-                <h2>Nuevo producto</h2>
-                <span>Agrega un articulo al catalogo de Productos.</span>
-              </div>
-
-              <form class="form two-columns" (ngSubmit)="guardarProducto()">
-                <label>
-                  Nombre
-                  <input name="modalProductoNombre" [(ngModel)]="productoForm.nombre" required>
-                </label>
-                <label>
-                  Categoria
-                  <input name="modalProductoCategoria" [(ngModel)]="productoForm.categoria" required>
-                </label>
-                <label class="full">
-                  Descripcion
-                  <input name="modalProductoDescripcion" [(ngModel)]="productoForm.descripcion">
-                </label>
-                <label>
-                  Precio
-                  <input type="number" step="0.01" name="modalProductoPrecio" [(ngModel)]="productoForm.precio" required>
-                </label>
-                <label>
-                  Stock
-                  <input type="number" name="modalProductoStock" [(ngModel)]="productoForm.stock" required>
-                </label>
-                <label>
-                  Stock minimo
-                  <input type="number" name="modalProductoStockMinimo" [(ngModel)]="productoForm.stockMinimo" required>
-                </label>
-                <label class="check">
-                  <input type="checkbox" name="modalProductoActivo" [(ngModel)]="productoForm.activo">
-                  Producto activo
-                </label>
-                <button type="submit" class="primary full">Guardar producto</button>
-              </form>
-            </ng-container>
-
-            <ng-container *ngIf="activeModal === 'pedido'">
-              <div class="modal-heading">
-                <p class="eyebrow">Venta</p>
-                <h2>Nuevo pedido</h2>
-                <span>{{ state.producto.nombre ? 'Producto seleccionado: ' + state.producto.nombre : 'Selecciona un producto del catalogo para crear el pedido.' }}</span>
-              </div>
-
-              <div class="modal-picker">
-                <label>
-                  Producto
-                  <select
-                    name="modalProductoPedidoId"
-                    [(ngModel)]="productoPedidoId"
-                    (ngModelChange)="seleccionarProductoPorId($event)"
-                  >
-                    <option value="">Selecciona un producto</option>
-                    <option *ngFor="let producto of productos" [value]="producto.productoId">
-                      {{ producto.nombre }} - #{{ producto.productoId }} - {{ producto.stock }} und.
-                    </option>
-                  </select>
-                </label>
-                <button type="button" class="secondary modal-refresh" (click)="listarProductos()">Actualizar productos</button>
-                <p class="empty compact-empty" *ngIf="!productos.length">No hay productos cargados todavia.</p>
-              </div>
-
-              <div class="summary modal-summary">
-                <span>Cliente</span>
-                <strong>{{ state.usuario.nombre || 'Sin login' }} - {{ state.cedula || 'sin cedula' }}</strong>
-                <span>Producto</span>
-                <strong>{{ state.producto.nombre || 'Selecciona un producto' }}</strong>
-              </div>
-
-              <form class="form two-columns" (ngSubmit)="crearPedido()">
-                <label>
-                  Mesa
-                  <input name="modalPedidoMesa" [(ngModel)]="pedidoForm.mesa">
-                </label>
-                <label>
-                  Metodo pago
-                  <select name="modalPedidoMetodoPago" [(ngModel)]="pedidoForm.metodoPago">
-                    <option value="EFECTIVO">EFECTIVO</option>
-                    <option value="TARJETA">TARJETA</option>
-                    <option value="TRANSFERENCIA">TRANSFERENCIA</option>
-                  </select>
-                </label>
-                <label>
-                  Cantidad
-                  <input type="number" name="modalPedidoCantidad" [(ngModel)]="pedidoForm.cantidad" required>
-                </label>
-                <label>
-                  Impuesto
-                  <input type="number" step="0.01" name="modalPedidoImpuesto" [(ngModel)]="pedidoForm.impuesto">
-                </label>
-                <label class="full">
-                  Notas
-                  <input name="modalPedidoNotas" [(ngModel)]="pedidoForm.notas">
-                </label>
-                <button type="submit" class="primary full">Crear pedido</button>
-              </form>
-            </ng-container>
-          </section>
-        </div>
-        
+      <!-- Main Content Area -->
+      <section class="main-content">
+        <app-producto *ngIf="currentView === 'productos'"></app-producto>
+        <app-pedido *ngIf="currentView === 'pedidos'"></app-pedido>
+        <app-dashboard *ngIf="currentView === 'seguimiento'"></app-dashboard>
       </section>
     </div>
   </ng-template>

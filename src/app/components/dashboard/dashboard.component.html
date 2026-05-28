@@ -1,0 +1,131 @@
+<section class="dashboard-content">
+  <header class="dashboard-header">
+    <h2>Dashboard - Seguimiento de Pedidos</h2>
+  </header>
+
+  <div class="estadisticas-grid">
+    <div class="stat-card">
+      <div class="stat-icon">P</div>
+      <div class="stat-info">
+        <span class="label">Total Pedidos</span>
+        <strong class="value">{{ estadisticas.totalPedidos }}</strong>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">$</div>
+      <div class="stat-info">
+        <span class="label">Total Ventas</span>
+        <strong class="value">{{ estadisticas.totalVentas | currency }}</strong>
+      </div>
+    </div>
+
+    <div class="stat-card pending">
+      <div class="stat-icon">!</div>
+      <div class="stat-info">
+        <span class="label">Pendientes</span>
+        <strong class="value">{{ estadisticas.pedidosPendientes }}</strong>
+      </div>
+    </div>
+
+    <div class="stat-card delivered">
+      <div class="stat-icon">OK</div>
+      <div class="stat-info">
+        <span class="label">Entregados</span>
+        <strong class="value">{{ estadisticas.pedidosEntregados }}</strong>
+      </div>
+    </div>
+  </div>
+
+  <div class="dashboard-grid">
+    <!-- Seccion de Pedidos Recientes -->
+    <section class="dashboard-panel">
+      <div class="panel-header">
+        <h3>Pedidos Recientes</h3>
+        <button class="secondary small" (click)="cargarDatos()">Actualizar</button>
+      </div>
+      <div class="panel-body">
+        <table *ngIf="ultimosPedidos.length; else emptyPedidos">
+          <thead>
+            <tr>
+              <th>Numero</th>
+              <th>Cliente</th>
+              <th>Total</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let pedido of ultimosPedidos">
+              <td class="numero">{{ pedido.numeroPedido }}</td>
+              <td>{{ pedido.nombreCliente || pedido.cedulaCliente }}</td>
+              <td class="monto">{{ pedido.total | currency }}</td>
+              <td>
+                <span class="badge" [ngClass]="'estado-' + (pedido.estado || 'pendiente').toLowerCase()">
+                  {{ pedido.estado || 'PENDIENTE' }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <ng-template #emptyPedidos>
+          <p class="empty">No hay pedidos para mostrar.</p>
+        </ng-template>
+      </div>
+    </section>
+
+    <!-- Seccion de Eventos de Trazabilidad -->
+    <section class="dashboard-panel">
+      <div class="panel-header">
+        <h3>Trazabilidad - Eventos</h3>
+        <button class="danger small" (click)="limpiarEventos()" *ngIf="eventosDashboard.length">Limpiar</button>
+      </div>
+      <div class="panel-body">
+        <div class="eventos-list" *ngIf="eventosDashboard.length; else emptyEventos">
+          <div class="evento-item" *ngFor="let evento of eventosDashboard">
+            <div class="evento-tiempo">
+              {{ evento.hora | date: 'short' }}
+            </div>
+            <div class="evento-contenido">
+              <strong>{{ evento.titulo }}</strong>
+              <p>{{ evento.detalle }}</p>
+            </div>
+          </div>
+        </div>
+        <ng-template #emptyEventos>
+          <p class="empty">No hay eventos registrados.</p>
+        </ng-template>
+      </div>
+    </section>
+  </div>
+
+  <!-- Seccion de Usuario -->
+  <section class="user-info-panel">
+    <div class="panel-header">
+      <h3>Información de Sesión</h3>
+    </div>
+    <div class="user-details">
+      <div class="user-field">
+        <span class="label">Usuario:</span>
+        <strong>{{ state.usuario.nombre || 'No autenticado' }}</strong>
+      </div>
+      <div class="user-field">
+        <span class="label">Email:</span>
+        <strong>{{ state.usuario.email || 'N/A' }}</strong>
+      </div>
+      <div class="user-field">
+        <span class="label">Cedula:</span>
+        <strong>{{ state.cedula || 'N/A' }}</strong>
+      </div>
+      <div class="user-field">
+        <span class="label">Rol:</span>
+        <strong>{{ state.usuario.role || 'N/A' }}</strong>
+      </div>
+      <div class="user-field">
+        <span class="label">Token:</span>
+        <strong class="token" *ngIf="state.token">{{ state.token.substring(0, 20) }}...</strong>
+        <strong *ngIf="!state.token" class="no-token">No hay token</strong>
+      </div>
+    </div>
+  </section>
+
+</section>
