@@ -141,7 +141,7 @@ export class ProductoComponent implements OnInit {
     this.loading = true;
     this.resultado = null;
 
-    this.request<Producto>('Actualizar producto', 'POST', `${API.productos}/guardar`, payload, (producto) => {
+    this.request<Producto>('Actualizar producto', 'PUT', `${API.productos}/actualizar/${payload.productoId}`, payload, (producto) => {
       this.loading = false;
       if (producto?.productoId) {
         this.resultado = {
@@ -221,7 +221,7 @@ export class ProductoComponent implements OnInit {
 
   private request<T>(
     title: string,
-    method: 'GET' | 'POST',
+    method: 'GET' | 'POST' | 'PUT',
     url: string,
     body: unknown,
     success: (data: T | null) => void
