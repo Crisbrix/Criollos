@@ -49,7 +49,7 @@ interface EventoTrazabilidad {
 }
 
 const API = {
-  auth: 'https://authc.netlify.app',
+  auth: 'https://auth-j0i2.onrender.com/api/criollos/usuarios',
   productos: 'https://producto-2fxd.onrender.com/productos',
   pedidos: 'https://pedidos-dg22.onrender.com/api/criollos/pedidos'
 };
