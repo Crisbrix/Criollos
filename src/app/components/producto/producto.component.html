@@ -40,9 +40,10 @@
       </div>
     </div>
 
-    <div *ngIf="resultado" class="resultado" [ngClass]="resultado.tipo === 'exito' ? 'resultado-exito' : 'resultado-error'">
-      <strong>{{ resultado.mensaje }}</strong>
-      <pre *ngIf="resultado.detalle">{{ resultado.detalle | json }}</pre>
+    <div *ngIf="resultado" class="toast" [ngClass]="resultado.tipo === 'exito' ? 'toast-exito' : 'toast-error'">
+      <span class="toast-icon">{{ resultado.tipo === 'exito' ? 'OK' : 'XX' }}</span>
+      <span class="toast-msg">{{ resultado.mensaje }}</span>
+      <button class="toast-close" (click)="resultado = null">X</button>
     </div>
 
     <div *ngIf="loading" class="loading-overlay">
@@ -82,10 +83,15 @@
               </span>
             </td>
             <td class="actions-cell">
-              <button class="action-btn view" (click)="abrirModalVer(producto)" title="Ver detalle">Ver</button>
-              <button class="action-btn edit" (click)="abrirModalEditar(producto)" title="Editar">Editar</button>
-              <button class="action-btn delete" (click)="abrirModalEliminar(producto)" title="Eliminar">Eliminar</button>
-              <button class="action-btn select" (click)="seleccionarProducto(producto)" [class.selected]="selectedProduct.productoId === producto.productoId" title="Seleccionar">Sel</button>
+              <button class="action-btn view" (click)="abrirModalVer(producto)" title="Ver detalle">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+              <button class="action-btn edit" (click)="abrirModalEditar(producto)" title="Editar">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+              </button>
+              <button class="action-btn delete" (click)="abrirModalEliminar(producto)" title="Eliminar">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              </button>
             </td>
           </tr>
         </tbody>
@@ -183,7 +189,7 @@
         </label>
         <label>
           Categoria
-          <input type="text" name="modalProductoCategoria" [(ngModel)]="productoForm.categoria">
+          <input type="text" name="modalProductoCategoria" [(ngModel)]="productoForm.categoria" required>
         </label>
         <label class="full">
           Descripcion

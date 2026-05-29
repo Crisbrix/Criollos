@@ -21,19 +21,27 @@ export interface Producto {
 }
 
 export interface Pedido {
+  id?: number;
   numeroPedido?: string;
   cedulaCliente?: string;
   nombreCliente?: string;
+  emailCliente?: string;
   mesa?: string;
+  usuarioId?: number;
   metodoPago?: string;
   estado?: string;
   subtotal?: number;
   impuesto?: number;
   total?: number;
+  fechaCreacion?: string;
+  fechaActualizacion?: string;
   detalles?: Array<{
+    id?: number;
     productoId?: number;
     nombreProducto?: string;
     cantidad?: number;
+    precioUnitario?: number;
+    subtotal?: number;
     notas?: string;
   }>;
 }

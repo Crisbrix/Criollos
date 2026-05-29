@@ -1,5 +1,5 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { CurrencyPipe, JsonPipe, NgClass, NgFor, NgIf } from '@angular/common';
+import { CurrencyPipe, DatePipe, NgClass, NgFor, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { SharedService, Pedido, Producto } from '../../services/shared.service';
@@ -12,7 +12,7 @@ const API = {
 @Component({
   selector: 'app-pedido',
   standalone: true,
-  imports: [CurrencyPipe, JsonPipe, NgClass, NgFor, NgIf, FormsModule],
+  imports: [CurrencyPipe, DatePipe, NgClass, NgFor, NgIf, FormsModule],
   templateUrl: './pedido.component.html',
   styleUrl: './pedido.component.css'
 })
@@ -40,7 +40,9 @@ export class PedidoComponent implements OnInit {
   };
   pedidoBusquedaNumero = '';
   estadoFiltro = 'PENDIENTE';
-  activeModal: 'pedido' | null = null;
+  activeModal: 'pedido' | 'ver' | 'editar' | 'eliminar' | null = null;
+  pedidoSeleccionado: Pedido | null = null;
+  editarForm = { estado: 'PENDIENTE', mesa: '', notas: '' };
   outputTitle = 'Listo para probar';
   output: unknown = { mensaje: 'Modulo de pedidos' };
   loading = false;
@@ -50,8 +52,8 @@ export class PedidoComponent implements OnInit {
     return this.sharedService.getState();
   }
 
-  get ultimosPedidos(): Pedido[] {
-    return (this.pedidos.length ? this.pedidos : (this.state.ultimoPedido.numeroPedido ? [this.state.ultimoPedido] : [])).slice(0, 3);
+  get pedidosMostrados(): Pedido[] {
+    return this.pedidos.length ? this.pedidos : (this.state.ultimoPedido.numeroPedido ? [this.state.ultimoPedido] : []);
   }
 
   ngOnInit(): void {
@@ -114,6 +116,81 @@ export class PedidoComponent implements OnInit {
 
   cerrarModal(): void {
     this.activeModal = null;
+    this.pedidoSeleccionado = null;
+  }
+
+  abrirModalVer(pedido: Pedido): void {
+    this.pedidoSeleccionado = pedido;
+    this.activeModal = 'ver';
+  }
+
+  abrirModalEditar(pedido: Pedido): void {
+    this.pedidoSeleccionado = pedido;
+    this.editarForm = {
+      estado: pedido.estado || 'PENDIENTE',
+      mesa: pedido.mesa || '',
+      notas: pedido.detalles?.[0]?.notas || ''
+    };
+    this.activeModal = 'editar';
+  }
+
+  abrirModalEliminar(pedido: Pedido): void {
+    this.pedidoSeleccionado = pedido;
+    this.activeModal = 'eliminar';
+  }
+
+  actualizarPedido(): void {
+    const pedido = this.pedidoSeleccionado;
+    if (!pedido?.numeroPedido) return;
+
+    this.loading = true;
+    this.resultado = null;
+
+    this.request<Pedido>('Actualizar estado pedido', 'PUT', `${API.pedidos}/estado/${encodeURIComponent(pedido.numeroPedido)}`, { estado: this.editarForm.estado }, (updated) => {
+      this.loading = false;
+      if (updated?.numeroPedido) {
+        this.resultado = {
+          tipo: 'exito',
+          mensaje: `Pedido #${updated.numeroPedido} actualizado (${this.editarForm.estado})`,
+          detalle: updated
+        };
+        this.cerrarModal();
+        this.listarPedidos();
+      } else if (!this.resultado) {
+        this.resultado = {
+          tipo: 'error',
+          mensaje: 'No se pudo actualizar el pedido',
+          detalle: updated
+        };
+      }
+    });
+  }
+
+  eliminarPedido(): void {
+    const pedido = this.pedidoSeleccionado;
+    if (!pedido?.numeroPedido) return;
+
+    this.loading = true;
+    this.resultado = null;
+
+    this.request<string>('Eliminar pedido', 'DELETE', `${API.pedidos}/borrar/${encodeURIComponent(pedido.numeroPedido)}`, null, (response) => {
+      this.loading = false;
+      if (response && typeof response === 'string') {
+        this.resultado = {
+          tipo: 'exito',
+          mensaje: response,
+          detalle: undefined
+        };
+        this.cerrarModal();
+        this.listarPedidos();
+      } else if (!this.resultado) {
+        this.resultado = {
+          tipo: 'error',
+          mensaje: (response as any)?.mensaje || 'No se pudo eliminar el pedido',
+          detalle: response
+        };
+      }
+    });
   }
 
   crearPedido(): void {
@@ -172,7 +249,6 @@ export class PedidoComponent implements OnInit {
 
     this.request<Pedido>('Crear pedido', 'POST', `${API.pedidos}/guardar`, payload, (pedido) => {
       this.loading = false;
-      console.log('Respuesta del servidor:', pedido);
       if (pedido?.numeroPedido) {
         this.resultado = {
           tipo: 'exito',
@@ -183,7 +259,7 @@ export class PedidoComponent implements OnInit {
         this.cerrarModal();
         this.resetPedidoForm();
         this.listarPedidos();
-      } else {
+      } else if (!this.resultado) {
         this.resultado = {
           tipo: 'error',
           mensaje: 'No se pudo crear el pedido. Verifica los datos.',
@@ -195,8 +271,16 @@ export class PedidoComponent implements OnInit {
 
   buscarPedido(): void {
     if (!this.pedidoBusquedaNumero) return;
+    this.loading = true;
+    this.resultado = null;
     this.request<Pedido>('Buscar pedido', 'GET', `${API.pedidos}/buscar/${encodeURIComponent(this.pedidoBusquedaNumero)}`, null, (pedido) => {
-      if (pedido?.numeroPedido) this.seleccionarPedido(pedido);
+      this.loading = false;
+      if (pedido?.numeroPedido) {
+        this.resultado = { tipo: 'exito', mensaje: `Pedido encontrado: ${pedido.numeroPedido}`, detalle: pedido };
+        this.seleccionarPedido(pedido);
+      } else if (!this.resultado) {
+        this.resultado = { tipo: 'error', mensaje: 'Pedido no encontrado.' };
+      }
     });
   }
 
@@ -231,7 +315,7 @@ export class PedidoComponent implements OnInit {
 
   private request<T>(
     title: string,
-    method: 'GET' | 'POST',
+    method: 'GET' | 'POST' | 'PUT' | 'DELETE',
     url: string,
     body: unknown,
     success: (data: T | null) => void
@@ -255,7 +339,7 @@ export class PedidoComponent implements OnInit {
         this.setOutput(title, data);
         this.resultado = {
           tipo: 'error',
-          mensaje: data.mensaje || 'Error al conectar con el servidor',
+          mensaje: data.mensaje || data.message || 'Error al conectar con el servidor',
           detalle: data
         };
         success(null);

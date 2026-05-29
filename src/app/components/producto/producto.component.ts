@@ -1,5 +1,5 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { CurrencyPipe, JsonPipe, NgClass, NgFor, NgIf } from '@angular/common';
+import { CurrencyPipe, NgClass, NgFor, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { SharedService, Producto } from '../../services/shared.service';
@@ -11,7 +11,7 @@ const API = {
 @Component({
   selector: 'app-producto',
   standalone: true,
-  imports: [CurrencyPipe, JsonPipe, NgClass, NgFor, NgIf, FormsModule],
+  imports: [CurrencyPipe, NgClass, NgFor, NgIf, FormsModule],
   templateUrl: './producto.component.html',
   styleUrl: './producto.component.css'
 })
@@ -34,6 +34,7 @@ export class ProductoComponent implements OnInit {
   productoSeleccionado: Producto | null = null;
   loading = false;
   resultado: { tipo: 'exito' | 'error'; mensaje: string; detalle?: unknown } | null = null;
+  private resultadoTimer: any = null;
   outputTitle = 'Productos';
   output: unknown = { mensaje: 'Modulo de productos' };
 
@@ -170,24 +171,44 @@ export class ProductoComponent implements OnInit {
 
     this.request<any>('Eliminar producto', 'DELETE', `${API.productos}/eliminar/${this.productoSeleccionado.productoId}`, null, (response) => {
       this.loading = false;
-      this.resultado = {
-        tipo: 'exito',
-        mensaje: `Producto eliminado exitosamente`,
-        detalle: response
-      };
-      this.cerrarModal();
-      this.listarProductos();
+      if (response?.success) {
+        this.resultado = {
+          tipo: 'exito',
+          mensaje: 'Producto eliminado exitosamente',
+          detalle: response
+        };
+        this.cerrarModal();
+        this.listarProductos();
+      } else {
+        this.resultado = {
+          tipo: 'error',
+          mensaje: response?.mensaje || 'No se pudo eliminar el producto',
+          detalle: response
+        };
+      }
     });
   }
 
   buscarProducto(): void {
     if (!this.productoBusquedaId) return;
     this.loading = true;
+    this.resultado = null;
 
     this.request<Producto>('Buscar producto', 'GET', `${API.productos}/buscar/${encodeURIComponent(this.productoBusquedaId)}`, null, (producto) => {
       this.loading = false;
       if (producto?.productoId) {
+        this.resultado = {
+          tipo: 'exito',
+          mensaje: `Producto encontrado: ${producto.nombre}`,
+          detalle: producto
+        };
         this.seleccionarProducto(producto);
+      } else {
+        this.resultado = {
+          tipo: 'error',
+          mensaje: `No se encontro producto con ID: ${this.productoBusquedaId}`,
+          detalle: producto
+        };
       }
     });
   }

@@ -25,7 +25,7 @@
       <button class="secondary" (click)="listarPedidos()">Listar todos</button>
       <select [(ngModel)]="estadoFiltro" name="estadoFiltro" (change)="listarPedidosPorEstado()">
         <option value="PENDIENTE">Pendiente</option>
-        <option value="EN_PROCESO">En Proceso</option>
+        <option value="EN_PREPARACION">En Preparacion</option>
         <option value="ENTREGADO">Entregado</option>
         <option value="CANCELADO">Cancelado</option>
       </select>
@@ -34,9 +34,10 @@
       </button>
     </div>
 
-    <div *ngIf="resultado" class="resultado" [ngClass]="resultado.tipo === 'exito' ? 'resultado-exito' : 'resultado-error'">
-      <strong>{{ resultado.mensaje }}</strong>
-      <pre *ngIf="resultado.detalle">{{ resultado.detalle | json }}</pre>
+    <div *ngIf="resultado" class="toast" [ngClass]="resultado.tipo === 'exito' ? 'toast-exito' : 'toast-error'">
+      <span class="toast-icon">{{ resultado.tipo === 'exito' ? 'OK' : 'XX' }}</span>
+      <span class="toast-msg">{{ resultado.mensaje }}</span>
+      <button class="toast-close" (click)="resultado = null">X</button>
     </div>
 
     <div *ngIf="loading" class="loading-overlay">
@@ -44,7 +45,7 @@
     </div>
 
     <div class="orders-table">
-      <table *ngIf="ultimosPedidos.length; else emptyOrders">
+      <table *ngIf="pedidosMostrados.length; else emptyOrders">
         <thead>
           <tr>
             <th>Numero</th>
@@ -53,10 +54,11 @@
             <th>Total</th>
             <th>Estado</th>
             <th>Metodo Pago</th>
+            <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let pedido of ultimosPedidos" (click)="seleccionarPedido(pedido)" class="clickable">
+          <tr *ngFor="let pedido of pedidosMostrados" [class.selected]="pedidoSeleccionado?.numeroPedido === pedido.numeroPedido">
             <td class="numero">{{ pedido.numeroPedido }}</td>
             <td>{{ pedido.nombreCliente || pedido.cedulaCliente }}</td>
             <td>{{ pedido.mesa }}</td>
@@ -67,6 +69,17 @@
               </span>
             </td>
             <td>{{ pedido.metodoPago }}</td>
+            <td class="actions-cell">
+              <button class="action-btn view" (click)="abrirModalVer(pedido)" title="Ver detalle">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+              <button class="action-btn edit" (click)="abrirModalEditar(pedido)" title="Editar estado">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+              </button>
+              <button class="action-btn delete" (click)="abrirModalEliminar(pedido)" title="Eliminar">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              </button>
+            </td>
           </tr>
         </tbody>
       </table>
@@ -75,6 +88,135 @@
       </ng-template>
     </div>
   </div>
+
+  <!-- Modal Ver Pedido -->
+  <ng-container *ngIf="activeModal === 'ver' && pedidoSeleccionado">
+    <div class="modal-overlay" (click)="cerrarModal()"></div>
+    <section class="modal">
+      <div class="modal-header">
+        <h3>Detalle del Pedido</h3>
+        <button type="button" class="close-btn" (click)="cerrarModal()">X</button>
+      </div>
+      <div class="modal-body">
+        <div class="detail-grid">
+          <div class="detail-item">
+            <span class="label">Numero Pedido</span>
+            <strong>{{ pedidoSeleccionado.numeroPedido }}</strong>
+          </div>
+          <div class="detail-item">
+            <span class="label">Cliente</span>
+            <strong>{{ pedidoSeleccionado.nombreCliente || pedidoSeleccionado.cedulaCliente }}</strong>
+          </div>
+          <div class="detail-item">
+            <span class="label">Cedula</span>
+            <strong>{{ pedidoSeleccionado.cedulaCliente }}</strong>
+          </div>
+          <div class="detail-item">
+            <span class="label">Mesa</span>
+            <strong>{{ pedidoSeleccionado.mesa }}</strong>
+          </div>
+          <div class="detail-item">
+            <span class="label">Metodo Pago</span>
+            <strong>{{ pedidoSeleccionado.metodoPago }}</strong>
+          </div>
+          <div class="detail-item">
+            <span class="label">Estado</span>
+            <span class="badge" [ngClass]="'estado-' + (pedidoSeleccionado.estado || 'pendiente').toLowerCase()">
+              {{ pedidoSeleccionado.estado || 'PENDIENTE' }}
+            </span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Subtotal</span>
+            <strong>{{ pedidoSeleccionado.subtotal | currency }}</strong>
+          </div>
+          <div class="detail-item">
+            <span class="label">Impuesto</span>
+            <strong>{{ pedidoSeleccionado.impuesto | currency }}</strong>
+          </div>
+          <div class="detail-item">
+            <span class="label">Total</span>
+            <strong class="monto">{{ pedidoSeleccionado.total | currency }}</strong>
+          </div>
+          <div class="detail-item full">
+            <span class="label">Productos</span>
+            <div class="detalle-lista">
+              <div *ngFor="let det of pedidoSeleccionado.detalles" class="detalle-item">
+                <span>{{ det.cantidad }}x {{ det.nombreProducto }}</span>
+                <span>{{ (det.cantidad || 0) * (det.precioUnitario || 0) | currency }}</span>
+                <span *ngIf="det.notas" class="nota">{{ det.notas }}</span>
+              </div>
+            </div>
+          </div>
+          <div class="detail-item full" *ngIf="pedidoSeleccionado.fechaCreacion">
+            <span class="label">Creado</span>
+            <strong>{{ pedidoSeleccionado.fechaCreacion | date:'short' }}</strong>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="secondary" (click)="cerrarModal()">Cerrar</button>
+        <button class="primary" (click)="abrirModalEditar(pedidoSeleccionado)">Cambiar Estado</button>
+      </div>
+    </section>
+  </ng-container>
+
+  <!-- Modal Editar Estado -->
+  <ng-container *ngIf="activeModal === 'editar' && pedidoSeleccionado">
+    <div class="modal-overlay" (click)="cerrarModal()"></div>
+    <section class="modal modal-small">
+      <div class="modal-header">
+        <h3>Cambiar Estado</h3>
+        <button type="button" class="close-btn" (click)="cerrarModal()">X</button>
+      </div>
+      <form class="form" (ngSubmit)="actualizarPedido()">
+        <div class="modal-body">
+          <div class="summary">
+            <span>Pedido</span>
+            <strong>{{ pedidoSeleccionado.numeroPedido }}</strong>
+          </div>
+          <label>
+            Nuevo Estado
+            <select name="editarEstado" [(ngModel)]="editarForm.estado" required>
+              <option value="PENDIENTE">Pendiente</option>
+              <option value="EN_PREPARACION">En Preparacion</option>
+              <option value="ENTREGADO">Entregado</option>
+              <option value="CANCELADO">Cancelado</option>
+            </select>
+          </label>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="secondary" (click)="cerrarModal()">Cancelar</button>
+          <button type="submit" class="primary" [disabled]="loading">
+            {{ loading ? 'Guardando...' : 'Actualizar' }}
+          </button>
+        </div>
+      </form>
+    </section>
+  </ng-container>
+
+  <!-- Modal Confirmar Eliminar -->
+  <ng-container *ngIf="activeModal === 'eliminar' && pedidoSeleccionado">
+    <div class="modal-overlay" (click)="cerrarModal()"></div>
+    <section class="modal modal-small">
+      <div class="modal-header">
+        <h3>Confirmar Eliminacion</h3>
+        <button type="button" class="close-btn" (click)="cerrarModal()">X</button>
+      </div>
+      <div class="modal-body">
+        <div class="confirm-content">
+          <p>Estas seguro de eliminar el pedido?</p>
+          <strong>{{ pedidoSeleccionado.numeroPedido }}</strong>
+          <p class="warning-text">Esta accion no se puede deshacer</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="secondary" (click)="cerrarModal()">Cancelar</button>
+        <button class="danger" (click)="eliminarPedido()" [disabled]="loading">
+          {{ loading ? 'Eliminando...' : 'Eliminar' }}
+        </button>
+      </div>
+    </section>
+  </ng-container>
 
   <!-- Modal de nuevo pedido -->
   <ng-container *ngIf="activeModal === 'pedido'">
