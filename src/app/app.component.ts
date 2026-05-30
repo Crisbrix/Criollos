@@ -5,10 +5,11 @@ import { FormsModule } from '@angular/forms';
 import { ProductoComponent } from './components/producto/producto.component';
 import { PedidoComponent } from './components/pedido/pedido.component';
 import { DashboardComponent } from './components/dashboard/dashboard.component';
+import { UsuarioComponent } from './components/usuario/usuario.component';
 import { SharedService, UsuarioSesion } from './services/shared.service';
 import { ToastService } from './services/toast.service';
 
-type ViewName = 'login' | 'productos' | 'pedidos' | 'seguimiento';
+type ViewName = 'login' | 'productos' | 'pedidos' | 'seguimiento' | 'usuarios';
 type AuthMode = 'login' | 'register';
 
 const API = {
@@ -25,7 +26,8 @@ const API = {
     NgIf,
     ProductoComponent,
     PedidoComponent,
-    DashboardComponent
+    DashboardComponent,
+    UsuarioComponent
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
@@ -67,18 +69,10 @@ export class AppComponent {
   }
 
   readonly steps = [
-    {
-      label: 'Dashboard',
-      view: 'seguimiento' as ViewName
-    },
-    {
-      label: 'Productos',
-      view: 'productos' as ViewName
-    },
-    {
-      label: 'Pedidos',
-      view: 'pedidos' as ViewName
-    }
+    { label: 'Dashboard', view: 'seguimiento' as ViewName },
+    { label: 'Productos', view: 'productos' as ViewName },
+    { label: 'Pedidos', view: 'pedidos' as ViewName },
+    { label: 'Usuarios', view: 'usuarios' as ViewName }
   ];
 
   estadoClase(estado?: string): string {

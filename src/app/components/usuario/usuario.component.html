@@ -1,0 +1,156 @@
+<section class="module-content">
+  <header class="module-header">
+    <h2>Usuarios</h2>
+    <div class="header-stats">
+      <div class="stat">
+        <span class="label">Total</span>
+        <strong>{{ totalUsuarios }}</strong>
+      </div>
+    </div>
+  </header>
+
+  <div class="module-body">
+    <div class="toolbar">
+      <div class="search-box">
+        <input type="text" placeholder="Buscar por ID o email..." [(ngModel)]="usuarioBusquedaId" name="usuarioBusqueda">
+        <button class="icon-btn" (click)="buscarUsuario()" [disabled]="loading">Buscar</button>
+      </div>
+      <div class="toolbar-actions">
+        <button class="secondary" (click)="listarUsuarios()" [disabled]="loading">Actualizar</button>
+        <button class="success" (click)="abrirModalNuevo()" [disabled]="loading">+ Nuevo usuario</button>
+      </div>
+    </div>
+
+    <div *ngIf="resultado" class="toast" [ngClass]="resultado.tipo === 'exito' ? 'toast-exito' : 'toast-error'">
+      <span class="toast-icon">{{ resultado.tipo === 'exito' ? 'OK' : 'XX' }}</span>
+      <span class="toast-msg">{{ resultado.mensaje }}</span>
+      <button class="toast-close" (click)="resultado = null">X</button>
+    </div>
+
+    <div *ngIf="loading" class="loading-overlay">
+      <div class="spinner-large"></div>
+    </div>
+
+    <div class="table-container">
+      <table class="data-table" *ngIf="usuarios.length; else emptyState">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Email</th>
+            <th>Rol</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let usuario of usuarios" [class.selected]="usuarioSeleccionado?.id === usuario.id">
+            <td class="id-cell">#{{ usuario.id }}</td>
+            <td class="name-cell">
+              <div class="user-name">{{ usuario.nombre }} {{ usuario.apellido }}</div>
+              <div class="user-sub">{{ usuario.username }}</div>
+            </td>
+            <td>{{ usuario.email }}</td>
+            <td><span class="badge role-badge">{{ usuario.role || 'N/A' }}</span></td>
+            <td><span class="status-badge" [ngClass]="usuario.estado === 'ACTIVO' ? 'active' : 'inactive'">{{ usuario.estado || 'N/A' }}</span></td>
+            <td class="actions-cell">
+              <button class="action-btn view" (click)="abrirModalVer(usuario)" title="Ver detalle">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+              <button class="action-btn edit" (click)="abrirModalEditar(usuario)" title="Editar">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+              </button>
+              <button class="action-btn delete" (click)="abrirModalEliminar(usuario)" title="Eliminar">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <ng-template #emptyState>
+        <div class="empty-state">
+          <h3>No hay usuarios</h3>
+          <p>Crea un nuevo usuario para comenzar</p>
+          <button class="success" (click)="abrirModalNuevo()">+ Nuevo usuario</button>
+        </div>
+      </ng-template>
+    </div>
+  </div>
+
+  <!-- Modal Ver -->
+  <ng-container *ngIf="activeModal === 'ver' && usuarioSeleccionado">
+    <div class="modal-overlay" (click)="cerrarModal()"></div>
+    <section class="modal">
+      <div class="modal-header">
+        <h3>Detalle del Usuario</h3>
+        <button type="button" class="close-btn" (click)="cerrarModal()">X</button>
+      </div>
+      <div class="modal-body">
+        <div class="detail-grid">
+          <div class="detail-item"><span class="label">ID</span><strong>#{{ usuarioSeleccionado.id }}</strong></div>
+          <div class="detail-item"><span class="label">Cedula</span><strong>{{ usuarioSeleccionado.cedula || 'N/A' }}</strong></div>
+          <div class="detail-item"><span class="label">Nombre</span><strong>{{ usuarioSeleccionado.nombre }} {{ usuarioSeleccionado.apellido }}</strong></div>
+          <div class="detail-item"><span class="label">Username</span><strong>{{ usuarioSeleccionado.username || 'N/A' }}</strong></div>
+          <div class="detail-item"><span class="label">Email</span><strong>{{ usuarioSeleccionado.email }}</strong></div>
+          <div class="detail-item"><span class="label">Edad</span><strong>{{ usuarioSeleccionado.edad || 'N/A' }}</strong></div>
+          <div class="detail-item"><span class="label">Telefono</span><strong>{{ usuarioSeleccionado.telefono || 'N/A' }}</strong></div>
+          <div class="detail-item"><span class="label">Rol</span><strong>{{ usuarioSeleccionado.role || 'N/A' }}</strong></div>
+          <div class="detail-item"><span class="label">Estado</span><span class="status-badge" [ngClass]="usuarioSeleccionado.estado === 'ACTIVO' ? 'active' : 'inactive'">{{ usuarioSeleccionado.estado || 'N/A' }}</span></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="secondary" (click)="cerrarModal()">Cerrar</button>
+        <button class="primary" (click)="abrirModalEditar(usuarioSeleccionado)">Editar</button>
+      </div>
+    </section>
+  </ng-container>
+
+  <!-- Modal Nuevo/Editar -->
+  <ng-container *ngIf="activeModal === 'nuevo' || activeModal === 'editar'">
+    <div class="modal-overlay" (click)="cerrarModal()"></div>
+    <section class="modal">
+      <div class="modal-header">
+        <h3>{{ activeModal === 'nuevo' ? 'Nuevo Usuario' : 'Editar Usuario' }}</h3>
+        <button type="button" class="close-btn" (click)="cerrarModal()">X</button>
+      </div>
+      <form class="form two-columns" (ngSubmit)="activeModal === 'nuevo' ? guardarUsuario() : actualizarUsuario()">
+        <label>Cedula<input type="text" name="formCedula" [(ngModel)]="usuarioForm.cedula" required></label>
+        <label>Nombre<input type="text" name="formNombre" [(ngModel)]="usuarioForm.nombre" required></label>
+        <label>Apellido<input type="text" name="formApellido" [(ngModel)]="usuarioForm.apellido"></label>
+        <label>Email<input type="email" name="formEmail" [(ngModel)]="usuarioForm.email" required></label>
+        <label>Username<input type="text" name="formUsername" [(ngModel)]="usuarioForm.username"></label>
+        <label>{{ activeModal === 'nuevo' ? 'Password *' : 'Password (dejar vacio si no cambia)' }}<input type="password" name="formPassword" [(ngModel)]="usuarioForm.password" [required]="activeModal === 'nuevo'"></label>
+        <label>Edad<input type="number" name="formEdad" [(ngModel)]="usuarioForm.edad"></label>
+        <label>Telefono<input type="text" name="formTelefono" [(ngModel)]="usuarioForm.telefono"></label>
+        <label>Role<select name="formRole" [(ngModel)]="usuarioForm.role"><option value="">Seleccionar</option><option value="ADMIN">Admin</option><option value="MESERO">Mesero</option><option value="COCINERO">Cocinero</option><option value="CAJERO">Cajero</option></select></label>
+        <label>Estado<select name="formEstado" [(ngModel)]="usuarioForm.estado"><option value="ACTIVO">Activo</option><option value="INACTIVO">Inactivo</option></select></label>
+        <div class="modal-footer full">
+          <button type="button" class="secondary" (click)="cerrarModal()">Cancelar</button>
+          <button type="submit" class="primary" [disabled]="loading">{{ loading ? 'Guardando...' : (activeModal === 'nuevo' ? 'Crear Usuario' : 'Actualizar') }}</button>
+        </div>
+      </form>
+    </section>
+  </ng-container>
+
+  <!-- Modal Eliminar -->
+  <ng-container *ngIf="activeModal === 'eliminar' && usuarioSeleccionado">
+    <div class="modal-overlay" (click)="cerrarModal()"></div>
+    <section class="modal modal-small">
+      <div class="modal-header">
+        <h3>Confirmar Eliminacion</h3>
+        <button type="button" class="close-btn" (click)="cerrarModal()">X</button>
+      </div>
+      <div class="modal-body">
+        <div class="confirm-content">
+          <p>Estas seguro de eliminar el usuario?</p>
+          <strong>{{ usuarioSeleccionado.nombre }} ({{ usuarioSeleccionado.email }})</strong>
+          <p class="warning-text">Esta accion no se puede deshacer</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="secondary" (click)="cerrarModal()">Cancelar</button>
+        <button class="danger" (click)="eliminarUsuario()" [disabled]="loading">{{ loading ? 'Eliminando...' : 'Eliminar' }}</button>
+      </div>
+    </section>
+  </ng-container>
+</section>
