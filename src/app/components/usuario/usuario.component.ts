@@ -139,7 +139,7 @@ export class UsuarioComponent implements OnInit {
     this.loading = true;
     this.resultado = null;
 
-    this.request<Usuario>('Actualizar usuario', 'PUT', `${API.auth}/actualizar/${usuario.id}`, payload, (updated) => {
+    this.request<Usuario>('Actualizar usuario', 'PUT', `${API.auth}/actualizar/${encodeURIComponent(usuario.cedula || '')}`, payload, (updated) => {
       this.loading = false;
       if (updated && (updated as any).id) {
         this.resultado = { tipo: 'exito', mensaje: 'Usuario actualizado exitosamente', detalle: updated };
@@ -158,10 +158,10 @@ export class UsuarioComponent implements OnInit {
     this.loading = true;
     this.resultado = null;
 
-    this.request<any>('Eliminar usuario', 'DELETE', `${API.auth}/eliminar/${usuario.id}`, null, (response) => {
+    this.request<{ success?: boolean; mensaje?: string }>('Eliminar usuario', 'DELETE', `${API.auth}/borrar/${encodeURIComponent(usuario.cedula || '')}`, null, (response) => {
       this.loading = false;
-      if (response?.success || response?.mensaje === 'Usuario eliminado correctamente') {
-        this.resultado = { tipo: 'exito', mensaje: 'Usuario eliminado exitosamente', detalle: response };
+      if (response?.success) {
+        this.resultado = { tipo: 'exito', mensaje: response.mensaje || 'Usuario eliminado exitosamente', detalle: undefined };
         this.cerrarModal();
         this.listarUsuarios();
       } else if (!this.resultado) {
@@ -187,7 +187,7 @@ export class UsuarioComponent implements OnInit {
   }
 
   listarUsuarios(): void {
-    this.request<Usuario[]>('Listar usuarios', 'GET', `${API.auth}`, null, (usuarios) => {
+    this.request<Usuario[]>('Listar usuarios', 'GET', `${API.auth}/listar`, null, (usuarios) => {
       this.usuarios = Array.isArray(usuarios) ? usuarios : [];
     });
   }
