@@ -119,7 +119,7 @@
         <label>Apellido<input type="text" name="formApellido" [(ngModel)]="usuarioForm.apellido"></label>
         <label>Email<input type="email" name="formEmail" [(ngModel)]="usuarioForm.email" required></label>
         <label>Username<input type="text" name="formUsername" [(ngModel)]="usuarioForm.username"></label>
-        <label>{{ activeModal === 'nuevo' ? 'Password *' : 'Password (dejar vacio si no cambia)' }}<input type="password" name="formPassword" [(ngModel)]="usuarioForm.password" [required]="activeModal === 'nuevo'"></label>
+        <label>Password *<input type="password" name="formPassword" [(ngModel)]="usuarioForm.password" required></label>
         <label>Edad<input type="number" name="formEdad" [(ngModel)]="usuarioForm.edad"></label>
         <label>Telefono<input type="text" name="formTelefono" [(ngModel)]="usuarioForm.telefono"></label>
         <label>Role<select name="formRole" [(ngModel)]="usuarioForm.role"><option value="">Seleccionar</option><option value="ADMIN">Admin</option><option value="MESERO">Mesero</option><option value="COCINERO">Cocinero</option><option value="CAJERO">Cajero</option></select></label>

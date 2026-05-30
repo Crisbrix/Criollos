@@ -134,7 +134,7 @@ export class UsuarioComponent implements OnInit {
       role: this.usuarioForm.role,
       estado: this.usuarioForm.estado
     };
-    if (this.usuarioForm.password) payload['password'] = this.usuarioForm.password;
+    payload['password'] = this.usuarioForm.password;
 
     this.loading = true;
     this.resultado = null;
