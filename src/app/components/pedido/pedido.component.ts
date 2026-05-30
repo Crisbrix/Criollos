@@ -261,7 +261,9 @@ export class PedidoComponent implements OnInit {
   }
 
   listarPedidos(): void {
+    this.loading = true;
     this.request<Pedido[]>('Listar pedidos', 'GET', `${API.pedidos}/listar`, null, (pedidos) => {
+      this.loading = false;
       const errMsg = ToastService.mensajeDeError(pedidos);
       if (errMsg) { this.toastService.show('error', errMsg); this.pedidos = []; return; }
       this.pedidos = Array.isArray(pedidos) ? pedidos : [];
@@ -269,7 +271,9 @@ export class PedidoComponent implements OnInit {
   }
 
   listarPedidosPorEstado(): void {
+    this.loading = true;
     this.request<Pedido[]>('Filtrar pedidos por estado', 'GET', `${API.pedidos}/listar/estado/${encodeURIComponent(this.estadoFiltro)}`, null, (pedidos) => {
+      this.loading = false;
       const errMsg = ToastService.mensajeDeError(pedidos);
       if (errMsg) { this.toastService.show('error', errMsg); this.pedidos = []; return; }
       this.pedidos = Array.isArray(pedidos) ? pedidos : [];

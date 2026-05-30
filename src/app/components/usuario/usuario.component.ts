@@ -187,7 +187,9 @@ export class UsuarioComponent implements OnInit {
   }
 
   listarUsuarios(): void {
+    this.loading = true;
     this.request<Usuario[]>('Listar usuarios', 'GET', `${API.auth}/listar`, null, (usuarios) => {
+      this.loading = false;
       this.usuarios = Array.isArray(usuarios) ? usuarios : [];
     });
   }
