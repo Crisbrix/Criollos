@@ -54,7 +54,7 @@ export class PedidoComponent implements OnInit {
   }
 
   get pedidosMostrados(): Pedido[] {
-    return this.pedidos.length ? this.pedidos : (this.state.ultimoPedido.numeroPedido ? [this.state.ultimoPedido] : []);
+    return this.pedidos;
   }
 
   ngOnInit(): void {
@@ -151,11 +151,9 @@ export class PedidoComponent implements OnInit {
       if (!updated) return;
       const errMsg = ToastService.mensajeDeError(updated);
       if (errMsg) { this.toastService.show('error', errMsg); return; }
-      if (updated?.numeroPedido) {
-        this.toastService.show('exito', `Pedido #${updated.numeroPedido} actualizado (${this.editarForm.estado})`);
-        this.cerrarModal();
-        this.listarPedidos();
-      }
+      this.toastService.show('exito', `Pedido #${pedido.numeroPedido} actualizado (${this.editarForm.estado})`);
+      this.cerrarModal();
+      this.listarPedidos();
     });
   }
 
@@ -165,17 +163,13 @@ export class PedidoComponent implements OnInit {
 
     this.loading = true;
 
-    this.request<string>('Eliminar pedido', 'DELETE', `${API.pedidos}/borrar/${encodeURIComponent(pedido.numeroPedido)}`, null, (response) => {
+    this.request<any>('Eliminar pedido', 'DELETE', `${API.pedidos}/borrar/${encodeURIComponent(pedido.numeroPedido)}`, null, (response) => {
       this.loading = false;
-      if (response && typeof response === 'string') {
-        this.toastService.show('exito', response);
-        this.cerrarModal();
-        this.listarPedidos();
-      } else if (response && (response as any)?.mensaje) {
-        this.toastService.show('error', (response as any).mensaje);
-      } else {
-        this.toastService.show('error', 'No se pudo eliminar el pedido');
-      }
+      if (!response) return;
+      const mensaje = response.mensaje || response.message || `Pedido #${pedido.numeroPedido} eliminado`;
+      this.toastService.show('exito', mensaje);
+      this.cerrarModal();
+      this.listarPedidos();
     });
   }
 
