@@ -40,6 +40,7 @@ export class AppComponent {
 
   currentView: ViewName = 'login';
   authMode: AuthMode = 'login';
+  showUserMenu = false;
   outputTitle = 'Bienvenido';
   output: unknown = { mensaje: 'Sistema de gestión Criollos' };
 
@@ -70,8 +71,8 @@ export class AppComponent {
 
   readonly steps = [
     { label: 'Dashboard', view: 'seguimiento' as ViewName },
-    { label: 'Productos', view: 'productos' as ViewName },
     { label: 'Pedidos', view: 'pedidos' as ViewName },
+    { label: 'Productos', view: 'productos' as ViewName },
     { label: 'Usuarios', view: 'usuarios' as ViewName }
   ];
 

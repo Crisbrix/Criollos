@@ -102,14 +102,16 @@ export class ProductoComponent implements OnInit {
       activo: Boolean(this.productoForm.activo)
     };
     this.loading = true;
-    this.request<Producto>('Crear producto', 'POST', `${API.productos}/guardar`, payload, (producto) => {
+    this.request<any>('Crear producto', 'POST', `${API.productos}/guardar`, payload, (res) => {
       this.loading = false;
-      if (!producto) return;
-      const errMsg = ToastService.mensajeDeError(producto);
+      console.log('RESPUESTA CREAR PRODUCTO:', JSON.stringify(res));
+      if (!res) return;
+      const errMsg = ToastService.mensajeDeError(res);
       if (errMsg) { this.toastService.show('error', errMsg); return; }
-      if (producto?.productoId) {
-        this.toastService.show('exito', `Producto "${producto.nombre}" creado exitosamente`);
-        this.seleccionarProducto(producto);
+      const id = res.productoId || res.id;
+      if (id) {
+        this.toastService.show('exito', `Producto "${res.nombre || ''}" creado exitosamente`);
+        this.seleccionarProducto(res);
         this.cerrarModal();
         this.resetProductoForm();
         this.listarProductos();
@@ -128,14 +130,16 @@ export class ProductoComponent implements OnInit {
       activo: Boolean(this.productoForm.activo)
     };
     this.loading = true;
-    this.request<Producto>('Actualizar producto', 'PUT', `${API.productos}/actualizar/${payload.productoId}`, payload, (producto) => {
+    this.request<any>('Actualizar producto', 'PUT', `${API.productos}/actualizar/${payload.productoId}`, payload, (res) => {
       this.loading = false;
-      if (!producto) return;
-      const errMsg = ToastService.mensajeDeError(producto);
+      console.log('RESPUESTA ACTUALIZAR PRODUCTO:', JSON.stringify(res));
+      if (!res) return;
+      const errMsg = ToastService.mensajeDeError(res);
       if (errMsg) { this.toastService.show('error', errMsg); return; }
-      if (producto?.productoId) {
-        this.toastService.show('exito', `Producto "${producto.nombre}" actualizado exitosamente`);
-        this.seleccionarProducto(producto);
+      const id = res.productoId || res.id;
+      if (id) {
+        this.toastService.show('exito', `Producto "${res.nombre || ''}" actualizado exitosamente`);
+        this.seleccionarProducto(res);
         this.cerrarModal();
         this.listarProductos();
       }

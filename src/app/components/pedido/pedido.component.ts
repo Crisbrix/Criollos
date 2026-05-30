@@ -228,14 +228,16 @@ export class PedidoComponent implements OnInit {
 
     this.loading = true;
 
-    this.request<Pedido>('Crear pedido', 'POST', `${API.pedidos}/guardar`, payload, (pedido) => {
+    this.request<any>('Crear pedido', 'POST', `${API.pedidos}/guardar`, payload, (res) => {
       this.loading = false;
-      if (!pedido) return;
-      const errMsg = ToastService.mensajeDeError(pedido);
+      console.log('RESPUESTA CREAR PEDIDO:', JSON.stringify(res));
+      if (!res) return;
+      const errMsg = ToastService.mensajeDeError(res);
       if (errMsg) { this.toastService.show('error', errMsg); return; }
-      if (pedido?.numeroPedido) {
-        this.toastService.show('exito', `Pedido #${pedido.numeroPedido} creado exitosamente`);
-        this.seleccionarPedido(pedido);
+      const numPedido = res.numeroPedido || res.numero_pedido || res.number;
+      if (numPedido) {
+        this.toastService.show('exito', `Pedido #${numPedido} creado exitosamente`);
+        this.seleccionarPedido(res);
         this.cerrarModal();
         this.resetPedidoForm();
         this.listarPedidos();

@@ -120,11 +120,6 @@
 
   <!-- Main Application -->
   <ng-template #loggedIn>
-    <!-- Animated background shapes -->
-    <div class="bg-shape"></div>
-    <div class="bg-shape"></div>
-    <div class="bg-shape"></div>
-
     <div class="logged-in-layout">
       <!-- Sidebar Navigation -->
       <aside class="sidebar">
@@ -138,14 +133,22 @@
           </button>
         </nav>
 
-        <div class="user-card">
+        <div class="user-card" (click)="showUserMenu = !showUserMenu" (blur)="showUserMenu = false" tabindex="0">
           <div class="avatar">{{ (state.usuario.nombre || 'U').charAt(0) }}</div>
           <div>
             <p class="user-name">{{ state.usuario.nombre || 'Usuario' }}</p>
             <p class="user-email">{{ state.usuario.email || 'email@test.com' }}</p>
           </div>
-          <button type="button" class="logout-btn" (click)="reset()">X</button>
+          <div class="user-menu" *ngIf="showUserMenu" (click)="$event.stopPropagation()">
+            <button class="menu-item" (click)="showUserMenu = false; currentView = 'seguimiento'">
+              <span>Ver Perfil</span>
+            </button>
+            <button class="menu-item danger" (click)="showUserMenu = false; reset()">
+              <span>Cerrar Sesion</span>
+            </button>
+          </div>
         </div>
+        <div class="menu-backdrop" *ngIf="showUserMenu" (click)="showUserMenu = false"></div>
       </aside>
 
       <!-- Main Content Area -->
