@@ -179,13 +179,7 @@ export class AppComponent {
   }
 
   reset(): void {
-    this.sharedService.setState({
-      token: '',
-      usuario: {},
-      cedula: '',
-      producto: {},
-      ultimoPedido: {}
-    });
+    this.sharedService.clearSession();
     this.currentView = 'login';
     this.authMode = 'login';
     this.setOutput('Flujo reiniciado', {

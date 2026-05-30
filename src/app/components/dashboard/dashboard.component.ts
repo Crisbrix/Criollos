@@ -1,123 +1,128 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { CurrencyPipe, DatePipe, NgClass, NgFor, NgIf } from '@angular/common';
+import { CurrencyPipe, NgClass, NgFor, NgIf } from '@angular/common';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { SharedService, Pedido } from '../../services/shared.service';
-import { ToastService } from '../../services/toast.service';
+import { SharedService, Pedido, Producto } from '../../services/shared.service';
 
-export interface EventoTrazabilidad {
-  hora: Date;
-  titulo: string;
-  detalle: string;
+export interface ApiStatus {
+  name: string;
+  url: string;
+  status: 'ok' | 'error' | 'loading';
+  mensaje: string;
 }
 
 const API = {
-  pedidos: 'https://pedidos-dg22.onrender.com/api/criollos/pedidos'
+  productos: 'https://producto-2fxd.onrender.com/productos',
+  pedidos: 'https://pedidos-dg22.onrender.com/api/criollos/pedidos',
+  auth: 'https://auth-j0i2.onrender.com/api/criollos/usuarios'
 };
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CurrencyPipe, DatePipe, NgClass, NgFor, NgIf],
+  imports: [CurrencyPipe, NgClass, NgFor, NgIf],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css'
 })
 export class DashboardComponent implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly sharedService = inject(SharedService);
-  private readonly toastService = inject(ToastService);
 
-  eventos: EventoTrazabilidad[] = [];
+  showUserModal = false;
+  productos: Producto[] = [];
   pedidos: Pedido[] = [];
-  outputTitle = 'Dashboard';
-  output: unknown = { mensaje: 'Sistema de seguimiento de pedidos' };
+  usuarios: unknown[] = [];
+  apiStatus: ApiStatus[] = [
+    { name: 'Productos', url: API.productos, status: 'loading', mensaje: 'Conectando...' },
+    { name: 'Pedidos', url: API.pedidos, status: 'loading', mensaje: 'Conectando...' },
+    { name: 'Auth', url: API.auth, status: 'loading', mensaje: 'Conectando...' }
+  ];
 
   get state() {
     return this.sharedService.getState();
-  }
-
-  get eventosDashboard(): EventoTrazabilidad[] {
-    return this.eventos.slice(0, 5);
   }
 
   get ultimosPedidos(): Pedido[] {
     return this.pedidos.slice(0, 5);
   }
 
+  get productosStockBajo(): Producto[] {
+    return this.productos.filter(p => (p.stock || 0) <= (p.stockMinimo || 0));
+  }
+
+  get totalStockValue(): number {
+    return this.productos.reduce((sum, p) => sum + ((p.precio || 0) * (p.stock || 0)), 0);
+  }
+
   get estadisticas() {
     return {
+      totalProductos: this.productos.length,
+      stockBajo: this.productosStockBajo.length,
       totalPedidos: this.pedidos.length,
       totalVentas: this.pedidos.reduce((sum, p) => sum + (p.total || 0), 0),
       pedidosPendientes: this.pedidos.filter(p => (p.estado || '').toUpperCase() === 'PENDIENTE').length,
-      pedidosEntregados: this.pedidos.filter(p => (p.estado || '').toUpperCase() === 'ENTREGADO').length
+      pedidosEntregados: this.pedidos.filter(p => (p.estado || '').toUpperCase() === 'ENTREGADO').length,
+      totalUsuarios: this.usuarios.length
     };
   }
 
   ngOnInit(): void {
-    this.cargarDatos();
-    this.addEvento('Dashboard iniciado', 'Panel de seguimiento listo.');
+    this.cargarTodo();
   }
 
-  cargarDatos(): void {
-    this.listarPedidos();
+  cargarTodo(): void {
+    this.cargarProductos();
+    this.cargarPedidos();
+    this.cargarUsuarios();
   }
 
-  listarPedidos(): void {
-    this.request<Pedido[]>('Listar pedidos', 'GET', `${API.pedidos}/listar`, null, (pedidos) => {
-      const errMsg = ToastService.mensajeDeError(pedidos);
-      if (errMsg) { this.toastService.show('error', errMsg); this.pedidos = []; return; }
-      this.pedidos = Array.isArray(pedidos) ? pedidos : [];
+  cargarProductos(): void {
+    this.request<Producto[]>('productos', 'GET', `${API.productos}/todos`, null, (data) => {
+      this.productos = Array.isArray(data) ? data : [];
+      this.apiStatus[0] = { ...this.apiStatus[0], status: 'ok', mensaje: `${this.productos.length} productos` };
     });
   }
 
-  limpiarEventos(): void {
-    this.eventos = [];
+  cargarPedidos(): void {
+    this.request<Pedido[]>('pedidos', 'GET', `${API.pedidos}/listar`, null, (data) => {
+      this.pedidos = Array.isArray(data) ? data : [];
+      this.apiStatus[1] = { ...this.apiStatus[1], status: 'ok', mensaje: `${this.pedidos.length} pedidos` };
+    });
+  }
+
+  cargarUsuarios(): void {
+    this.request<unknown[]>('auth', 'GET', `${API.auth}/listar`, null, (data) => {
+      this.usuarios = Array.isArray(data) ? data : [];
+      this.apiStatus[2] = { ...this.apiStatus[2], status: 'ok', mensaje: `${this.usuarios.length} usuarios` };
+    });
   }
 
   private request<T>(
-    title: string,
+    source: string,
     method: 'GET' | 'POST',
     url: string,
     body: unknown,
     success: (data: T | null) => void
   ): void {
-    this.http.request<T>(method, url, {
-      body,
-      headers: this.headers()
-    }).subscribe({
-      next: (data) => {
-        this.setOutput(`${title} (OK)`, data);
-        success(data);
-      },
+    this.http.request<T>(method, url, { body, headers: this.headers() }).subscribe({
+      next: (data) => { success(data); },
       error: (error) => {
-        const data = error.error || {
-          mensaje: error.status === 0 ? 'No se pudo conectar con el servicio.' : 'La API respondio con error.',
-          status: error.status
-        };
-        this.setOutput(title, data);
-        const mensaje = data.mensaje || data.message || data.error || (typeof data === 'string' ? data : 'Error al conectar con el servidor');
-        this.toastService.show('error', mensaje);
+        const idx = this.apiStatus.findIndex(a => a.url.startsWith(url.substring(0, url.indexOf('/', 10))));
+        if (idx >= 0) {
+          this.apiStatus[idx] = { ...this.apiStatus[idx], status: 'error', mensaje: `Error ${error.status || 'desconocido'}` };
+        }
         success(null);
       }
     });
   }
 
+  cerrarSesion(): void {
+    this.showUserModal = false;
+    this.sharedService.clearSession();
+  }
+
   private headers(): HttpHeaders {
     let headers = new HttpHeaders({ 'Content-Type': 'application/json' });
-    if (this.state.token) {
-      headers = headers.set('Authorization', `Bearer ${this.state.token}`);
-    }
+    if (this.state.token) headers = headers.set('Authorization', `Bearer ${this.state.token}`);
     return headers;
-  }
-
-  private setOutput(title: string, data: unknown): void {
-    this.outputTitle = title;
-    this.output = data || {};
-  }
-
-  private addEvento(titulo: string, detalle: string): void {
-    this.eventos = [
-      { hora: new Date(), titulo, detalle },
-      ...this.eventos
-    ];
   }
 }

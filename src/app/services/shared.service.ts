@@ -58,27 +58,46 @@ export interface AppState {
   providedIn: 'root'
 })
 export class SharedService {
-  private stateSubject = new BehaviorSubject<AppState>({
-    token: '',
-    usuario: {},
-    cedula: '',
-    producto: {},
-    ultimoPedido: {}
-  });
+  private readonly STORAGE_KEY = 'criollos_session';
+  private stateSubject = new BehaviorSubject<AppState>(this.loadFromStorage());
 
   state$ = this.stateSubject.asObservable();
 
   constructor() { }
+
+  private saveToStorage(state: AppState): void {
+    try {
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(state));
+    } catch { /* localStorage no disponible */ }
+  }
+
+  private loadFromStorage(): AppState {
+    try {
+      const raw = localStorage.getItem(this.STORAGE_KEY);
+      if (raw) return { ...this.defaultState(), ...JSON.parse(raw) };
+    } catch { /* fallo al leer localStorage */ }
+    return this.defaultState();
+  }
+
+  private defaultState(): AppState {
+    return { token: '', usuario: {}, cedula: '', producto: {}, ultimoPedido: {} };
+  }
 
   getState(): AppState {
     return this.stateSubject.value;
   }
 
   setState(state: AppState): void {
+    this.saveToStorage(state);
     this.stateSubject.next(state);
   }
 
   updateState(partial: Partial<AppState>): void {
     this.setState({ ...this.getState(), ...partial });
+  }
+
+  clearSession(): void {
+    try { localStorage.removeItem(this.STORAGE_KEY); } catch { /* ok */ }
+    this.stateSubject.next(this.defaultState());
   }
 }
