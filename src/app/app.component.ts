@@ -1,4 +1,4 @@
-import { NgClass, NgFor, NgIf } from '@angular/common';
+import { AsyncPipe, NgClass, NgFor, NgIf } from '@angular/common';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -6,6 +6,7 @@ import { ProductoComponent } from './components/producto/producto.component';
 import { PedidoComponent } from './components/pedido/pedido.component';
 import { DashboardComponent } from './components/dashboard/dashboard.component';
 import { SharedService, UsuarioSesion } from './services/shared.service';
+import { ToastService } from './services/toast.service';
 
 type ViewName = 'login' | 'productos' | 'pedidos' | 'seguimiento';
 type AuthMode = 'login' | 'register';
@@ -18,6 +19,7 @@ const API = {
   selector: 'app-root',
   imports: [
     FormsModule,
+    AsyncPipe,
     NgClass,
     NgFor,
     NgIf,
@@ -31,6 +33,8 @@ const API = {
 export class AppComponent {
   private readonly http = inject(HttpClient);
   private readonly sharedService = inject(SharedService);
+  readonly toastService = inject(ToastService);
+  readonly toast$ = this.toastService.toast$;
 
   currentView: ViewName = 'login';
   authMode: AuthMode = 'login';
@@ -85,13 +89,12 @@ export class AppComponent {
   }
 
   crearUsuario(): void {
-    const payload = {
-      ...this.usuarioForm,
-      edad: this.numberOrZero(this.usuarioForm.edad)
-    };
-
-    this.request<UsuarioSesion>('Crear usuario', 'POST', `${API.auth}/guardar`, payload, (usuario) => {
+    const payload = { ...this.usuarioForm, edad: this.numberOrZero(this.usuarioForm.edad) };
+    this.request<any>('Crear usuario', 'POST', `${API.auth}/guardar`, payload, (usuario) => {
       if (!usuario) return;
+      const errMsg = ToastService.mensajeDeError(usuario);
+      if (errMsg) { this.toastService.show('error', errMsg); return; }
+      this.toastService.show('exito', 'Usuario creado exitosamente. Inicia sesion.');
       this.loginForm.email = payload.email;
       this.loginForm.password = payload.password;
       this.authMode = 'login';
@@ -100,12 +103,17 @@ export class AppComponent {
 
   login(): void {
     this.loginLoading = true;
-    this.request<{ token?: string; usuario?: UsuarioSesion }>('Login', 'POST', `${API.auth}/login`, {
+    this.request<{ token?: string; usuario?: UsuarioSesion; mensaje?: string; error?: boolean }>('Login', 'POST', `${API.auth}/login`, {
       email: this.loginForm.email,
       password: this.loginForm.password
-    }, (data) => {
+    }, (data: any) => {
       this.loginLoading = false;
-      if (!data?.token) return;
+      if (!data || data.error === true || !data.token) {
+        const msg = data?.mensaje || 'Credenciales incorrectas';
+        this.toastService.show('error', msg);
+        return;
+      }
+      this.toastService.show('exito', 'Inicio de sesion exitoso. Bienvenido.');
       console.log('Datos del login:', data);
       console.log('Usuario recibido:', data.usuario);
 
@@ -214,6 +222,8 @@ export class AppComponent {
           status: error.status
         };
         this.setOutput(title, data);
+        const mensaje = data.mensaje || data.message || data.error || (typeof data === 'string' ? data : 'Error al conectar con el servidor');
+        this.toastService.show('error', mensaje);
         success(null);
       }
     });

@@ -3,6 +3,7 @@ import { CurrencyPipe, DatePipe, NgClass, NgFor, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { SharedService, Pedido, Producto } from '../../services/shared.service';
+import { ToastService } from '../../services/toast.service';
 
 const API = {
   pedidos: 'https://pedidos-dg22.onrender.com/api/criollos/pedidos',
@@ -19,6 +20,7 @@ const API = {
 export class PedidoComponent implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly sharedService = inject(SharedService);
+  private readonly toastService = inject(ToastService);
 
   pedidos: Pedido[] = [];
   productosDisponibles: Producto[] = [];
@@ -46,7 +48,6 @@ export class PedidoComponent implements OnInit {
   outputTitle = 'Listo para probar';
   output: unknown = { mensaje: 'Modulo de pedidos' };
   loading = false;
-  resultado: { tipo: 'exito' | 'error'; mensaje: string; detalle?: unknown } | null = null;
 
   get state() {
     return this.sharedService.getState();
@@ -62,9 +63,7 @@ export class PedidoComponent implements OnInit {
 
   abrirModal(): void {
     if (!this.state.token) {
-      this.setOutput('Advertencia', {
-        mensaje: 'Primero debes iniciar sesion.'
-      });
+      this.toastService.show('error', 'Primero debes iniciar sesion.');
       return;
     }
     this.carrito = [];
@@ -74,6 +73,8 @@ export class PedidoComponent implements OnInit {
 
   cargarProductos(): void {
     this.request<Producto[]>('Cargar productos', 'GET', `${API.productos}/todos`, null, (productos) => {
+      const errMsg = ToastService.mensajeDeError(productos);
+      if (errMsg) { this.toastService.show('error', errMsg); this.productosDisponibles = []; return; }
       this.productosDisponibles = Array.isArray(productos) ? productos : [];
     });
   }
@@ -144,24 +145,16 @@ export class PedidoComponent implements OnInit {
     if (!pedido?.numeroPedido) return;
 
     this.loading = true;
-    this.resultado = null;
 
     this.request<Pedido>('Actualizar estado pedido', 'PUT', `${API.pedidos}/estado/${encodeURIComponent(pedido.numeroPedido)}`, { estado: this.editarForm.estado }, (updated) => {
       this.loading = false;
+      if (!updated) return;
+      const errMsg = ToastService.mensajeDeError(updated);
+      if (errMsg) { this.toastService.show('error', errMsg); return; }
       if (updated?.numeroPedido) {
-        this.resultado = {
-          tipo: 'exito',
-          mensaje: `Pedido #${updated.numeroPedido} actualizado (${this.editarForm.estado})`,
-          detalle: updated
-        };
+        this.toastService.show('exito', `Pedido #${updated.numeroPedido} actualizado (${this.editarForm.estado})`);
         this.cerrarModal();
         this.listarPedidos();
-      } else if (!this.resultado) {
-        this.resultado = {
-          tipo: 'error',
-          mensaje: 'No se pudo actualizar el pedido',
-          detalle: updated
-        };
       }
     });
   }
@@ -171,24 +164,17 @@ export class PedidoComponent implements OnInit {
     if (!pedido?.numeroPedido) return;
 
     this.loading = true;
-    this.resultado = null;
 
     this.request<string>('Eliminar pedido', 'DELETE', `${API.pedidos}/borrar/${encodeURIComponent(pedido.numeroPedido)}`, null, (response) => {
       this.loading = false;
       if (response && typeof response === 'string') {
-        this.resultado = {
-          tipo: 'exito',
-          mensaje: response,
-          detalle: undefined
-        };
+        this.toastService.show('exito', response);
         this.cerrarModal();
         this.listarPedidos();
-      } else if (!this.resultado) {
-        this.resultado = {
-          tipo: 'error',
-          mensaje: (response as any)?.mensaje || 'No se pudo eliminar el pedido',
-          detalle: response
-        };
+      } else if (response && (response as any)?.mensaje) {
+        this.toastService.show('error', (response as any).mensaje);
+      } else {
+        this.toastService.show('error', 'No se pudo eliminar el pedido');
       }
     });
   }
@@ -199,9 +185,7 @@ export class PedidoComponent implements OnInit {
     console.log('State:', this.state);
 
     if (this.carrito.length === 0) {
-      this.setOutput('Advertencia', {
-        mensaje: 'Debes agregar al menos un producto al carrito.'
-      });
+      this.toastService.show('error', 'Debes agregar al menos un producto al carrito.');
       return;
     }
 
@@ -216,9 +200,7 @@ export class PedidoComponent implements OnInit {
     console.log('Total:', totalPedido);
 
     if (!cedulaCliente) {
-      this.setOutput('Falta completar el flujo', {
-        mensaje: 'Debes ingresar la cedula del cliente.'
-      });
+      this.toastService.show('error', 'Debes ingresar la cedula del cliente.');
       return;
     }
 
@@ -245,26 +227,18 @@ export class PedidoComponent implements OnInit {
     console.log('URL:', `${API.pedidos}/guardar`);
 
     this.loading = true;
-    this.resultado = null;
 
     this.request<Pedido>('Crear pedido', 'POST', `${API.pedidos}/guardar`, payload, (pedido) => {
       this.loading = false;
+      if (!pedido) return;
+      const errMsg = ToastService.mensajeDeError(pedido);
+      if (errMsg) { this.toastService.show('error', errMsg); return; }
       if (pedido?.numeroPedido) {
-        this.resultado = {
-          tipo: 'exito',
-          mensaje: `Pedido #${pedido.numeroPedido} creado exitosamente`,
-          detalle: pedido
-        };
+        this.toastService.show('exito', `Pedido #${pedido.numeroPedido} creado exitosamente`);
         this.seleccionarPedido(pedido);
         this.cerrarModal();
         this.resetPedidoForm();
         this.listarPedidos();
-      } else if (!this.resultado) {
-        this.resultado = {
-          tipo: 'error',
-          mensaje: 'No se pudo crear el pedido. Verifica los datos.',
-          detalle: pedido
-        };
       }
     });
   }
@@ -272,26 +246,30 @@ export class PedidoComponent implements OnInit {
   buscarPedido(): void {
     if (!this.pedidoBusquedaNumero) return;
     this.loading = true;
-    this.resultado = null;
     this.request<Pedido>('Buscar pedido', 'GET', `${API.pedidos}/buscar/${encodeURIComponent(this.pedidoBusquedaNumero)}`, null, (pedido) => {
       this.loading = false;
+      if (!pedido) return;
+      const errMsg = ToastService.mensajeDeError(pedido);
+      if (errMsg) { this.toastService.show('error', errMsg); return; }
       if (pedido?.numeroPedido) {
-        this.resultado = { tipo: 'exito', mensaje: `Pedido encontrado: ${pedido.numeroPedido}`, detalle: pedido };
+        this.toastService.show('exito', `Pedido encontrado: ${pedido.numeroPedido}`);
         this.seleccionarPedido(pedido);
-      } else if (!this.resultado) {
-        this.resultado = { tipo: 'error', mensaje: 'Pedido no encontrado.' };
       }
     });
   }
 
   listarPedidos(): void {
     this.request<Pedido[]>('Listar pedidos', 'GET', `${API.pedidos}/listar`, null, (pedidos) => {
+      const errMsg = ToastService.mensajeDeError(pedidos);
+      if (errMsg) { this.toastService.show('error', errMsg); this.pedidos = []; return; }
       this.pedidos = Array.isArray(pedidos) ? pedidos : [];
     });
   }
 
   listarPedidosPorEstado(): void {
     this.request<Pedido[]>('Filtrar pedidos por estado', 'GET', `${API.pedidos}/listar/estado/${encodeURIComponent(this.estadoFiltro)}`, null, (pedidos) => {
+      const errMsg = ToastService.mensajeDeError(pedidos);
+      if (errMsg) { this.toastService.show('error', errMsg); this.pedidos = []; return; }
       this.pedidos = Array.isArray(pedidos) ? pedidos : [];
     });
   }
@@ -337,11 +315,8 @@ export class PedidoComponent implements OnInit {
           status: error.status
         };
         this.setOutput(title, data);
-        this.resultado = {
-          tipo: 'error',
-          mensaje: data.mensaje || data.message || 'Error al conectar con el servidor',
-          detalle: data
-        };
+        const mensaje = data.mensaje || data.message || data.error || (typeof data === 'string' ? data : 'Error al conectar con el servidor');
+        this.toastService.show('error', mensaje);
         success(null);
       }
     });

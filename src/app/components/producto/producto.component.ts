@@ -3,6 +3,7 @@ import { CurrencyPipe, NgClass, NgFor, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { SharedService, Producto } from '../../services/shared.service';
+import { ToastService } from '../../services/toast.service';
 
 const API = {
   productos: 'https://producto-2fxd.onrender.com/productos'
@@ -18,6 +19,7 @@ const API = {
 export class ProductoComponent implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly sharedService = inject(SharedService);
+  private readonly toastService = inject(ToastService);
 
   productos: Producto[] = [];
   productoForm = {
@@ -33,8 +35,6 @@ export class ProductoComponent implements OnInit {
   activeModal: 'nuevo' | 'editar' | 'eliminar' | 'ver' | null = null;
   productoSeleccionado: Producto | null = null;
   loading = false;
-  resultado: { tipo: 'exito' | 'error'; mensaje: string; detalle?: unknown } | null = null;
-  private resultadoTimer: any = null;
   outputTitle = 'Productos';
   output: unknown = { mensaje: 'Modulo de productos' };
 
@@ -101,35 +101,24 @@ export class ProductoComponent implements OnInit {
       stockMinimo: this.numberOrZero(this.productoForm.stockMinimo),
       activo: Boolean(this.productoForm.activo)
     };
-
     this.loading = true;
-    this.resultado = null;
-
     this.request<Producto>('Crear producto', 'POST', `${API.productos}/guardar`, payload, (producto) => {
       this.loading = false;
+      if (!producto) return;
+      const errMsg = ToastService.mensajeDeError(producto);
+      if (errMsg) { this.toastService.show('error', errMsg); return; }
       if (producto?.productoId) {
-        this.resultado = {
-          tipo: 'exito',
-          mensaje: `Producto "${producto.nombre}" creado exitosamente`,
-          detalle: producto
-        };
+        this.toastService.show('exito', `Producto "${producto.nombre}" creado exitosamente`);
         this.seleccionarProducto(producto);
         this.cerrarModal();
         this.resetProductoForm();
         this.listarProductos();
-      } else {
-        this.resultado = {
-          tipo: 'error',
-          mensaje: 'No se pudo crear el producto',
-          detalle: producto
-        };
       }
     });
   }
 
   actualizarProducto(): void {
     if (!this.productoSeleccionado?.productoId) return;
-
     const payload = {
       productoId: this.productoSeleccionado.productoId,
       ...this.productoForm,
@@ -138,53 +127,33 @@ export class ProductoComponent implements OnInit {
       stockMinimo: this.numberOrZero(this.productoForm.stockMinimo),
       activo: Boolean(this.productoForm.activo)
     };
-
     this.loading = true;
-    this.resultado = null;
-
     this.request<Producto>('Actualizar producto', 'PUT', `${API.productos}/actualizar/${payload.productoId}`, payload, (producto) => {
       this.loading = false;
+      if (!producto) return;
+      const errMsg = ToastService.mensajeDeError(producto);
+      if (errMsg) { this.toastService.show('error', errMsg); return; }
       if (producto?.productoId) {
-        this.resultado = {
-          tipo: 'exito',
-          mensaje: `Producto "${producto.nombre}" actualizado exitosamente`,
-          detalle: producto
-        };
+        this.toastService.show('exito', `Producto "${producto.nombre}" actualizado exitosamente`);
         this.seleccionarProducto(producto);
         this.cerrarModal();
         this.listarProductos();
-      } else {
-        this.resultado = {
-          tipo: 'error',
-          mensaje: 'No se pudo actualizar el producto',
-          detalle: producto
-        };
       }
     });
   }
 
   eliminarProducto(): void {
     if (!this.productoSeleccionado?.productoId) return;
-
     this.loading = true;
-    this.resultado = null;
-
     this.request<any>('Eliminar producto', 'DELETE', `${API.productos}/eliminar/${this.productoSeleccionado.productoId}`, null, (response) => {
       this.loading = false;
       if (response?.success) {
-        this.resultado = {
-          tipo: 'exito',
-          mensaje: 'Producto eliminado exitosamente',
-          detalle: response
-        };
+        this.toastService.show('exito', 'Producto eliminado exitosamente');
         this.cerrarModal();
         this.listarProductos();
       } else {
-        this.resultado = {
-          tipo: 'error',
-          mensaje: response?.mensaje || 'No se pudo eliminar el producto',
-          detalle: response
-        };
+        const msg = response?.mensaje || response?.message || 'No se pudo eliminar el producto';
+        this.toastService.show('error', msg);
       }
     });
   }
@@ -192,23 +161,14 @@ export class ProductoComponent implements OnInit {
   buscarProducto(): void {
     if (!this.productoBusquedaId) return;
     this.loading = true;
-    this.resultado = null;
-
     this.request<Producto>('Buscar producto', 'GET', `${API.productos}/buscar/${encodeURIComponent(this.productoBusquedaId)}`, null, (producto) => {
       this.loading = false;
+      if (!producto) return;
+      const errMsg = ToastService.mensajeDeError(producto);
+      if (errMsg) { this.toastService.show('error', errMsg); return; }
       if (producto?.productoId) {
-        this.resultado = {
-          tipo: 'exito',
-          mensaje: `Producto encontrado: ${producto.nombre}`,
-          detalle: producto
-        };
+        this.toastService.show('exito', `Producto encontrado: ${producto.nombre}`);
         this.seleccionarProducto(producto);
-      } else {
-        this.resultado = {
-          tipo: 'error',
-          mensaje: `No se encontro producto con ID: ${this.productoBusquedaId}`,
-          detalle: producto
-        };
       }
     });
   }
@@ -218,6 +178,8 @@ export class ProductoComponent implements OnInit {
 
     this.request<Producto[]>('Listar productos', 'GET', `${API.productos}/todos`, null, (productos) => {
       this.loading = false;
+      const errMsg = ToastService.mensajeDeError(productos);
+      if (errMsg) { this.toastService.show('error', errMsg); this.productos = []; return; }
       this.productos = Array.isArray(productos) ? productos : [];
     });
   }
@@ -258,17 +220,12 @@ export class ProductoComponent implements OnInit {
       error: (error) => {
         this.loading = false;
         const data = error.error || {
-          mensaje: error.status === 0
-            ? 'No se pudo conectar con el servicio.'
-            : 'La API respondio con error.',
+          mensaje: error.status === 0 ? 'No se pudo conectar con el servicio.' : 'La API respondio con error.',
           status: error.status
         };
         this.setOutput(title, data);
-        this.resultado = {
-          tipo: 'error',
-          mensaje: data.mensaje || 'Error al conectar con el servidor',
-          detalle: data
-        };
+        const mensaje = data.mensaje || data.message || data.error || (typeof data === 'string' ? data : 'Error al conectar con el servidor');
+        this.toastService.show('error', mensaje);
         success(null);
       }
     });

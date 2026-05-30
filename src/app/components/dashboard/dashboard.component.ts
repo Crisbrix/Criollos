@@ -2,6 +2,7 @@ import { Component, inject, OnInit } from '@angular/core';
 import { CurrencyPipe, DatePipe, NgClass, NgFor, NgIf } from '@angular/common';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { SharedService, Pedido } from '../../services/shared.service';
+import { ToastService } from '../../services/toast.service';
 
 export interface EventoTrazabilidad {
   hora: Date;
@@ -23,6 +24,7 @@ const API = {
 export class DashboardComponent implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly sharedService = inject(SharedService);
+  private readonly toastService = inject(ToastService);
 
   eventos: EventoTrazabilidad[] = [];
   pedidos: Pedido[] = [];
@@ -61,6 +63,8 @@ export class DashboardComponent implements OnInit {
 
   listarPedidos(): void {
     this.request<Pedido[]>('Listar pedidos', 'GET', `${API.pedidos}/listar`, null, (pedidos) => {
+      const errMsg = ToastService.mensajeDeError(pedidos);
+      if (errMsg) { this.toastService.show('error', errMsg); this.pedidos = []; return; }
       this.pedidos = Array.isArray(pedidos) ? pedidos : [];
     });
   }
@@ -86,12 +90,12 @@ export class DashboardComponent implements OnInit {
       },
       error: (error) => {
         const data = error.error || {
-          mensaje: error.status === 0
-            ? 'No se pudo conectar con el servicio.'
-            : 'La API respondio con error.',
+          mensaje: error.status === 0 ? 'No se pudo conectar con el servicio.' : 'La API respondio con error.',
           status: error.status
         };
         this.setOutput(title, data);
+        const mensaje = data.mensaje || data.message || data.error || (typeof data === 'string' ? data : 'Error al conectar con el servidor');
+        this.toastService.show('error', mensaje);
         success(null);
       }
     });

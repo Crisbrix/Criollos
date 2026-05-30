@@ -1,4 +1,11 @@
 <main class="app">
+  <!-- Global Toast Notification -->
+  <div *ngIf="toast$ | async as toast" class="global-toast" [ngClass]="toast.tipo === 'exito' ? 'toast-exito' : 'toast-error'">
+    <span class="toast-icon">{{ toast.tipo === 'exito' ? 'OK' : '!' }}</span>
+    <span class="toast-msg">{{ toast.mensaje }}</span>
+    <button class="toast-close" (click)="toastService.hide()">X</button>
+  </div>
+
   <!-- Login Screen -->
   <ng-container *ngIf="!state.token; else loggedIn">
     <section class="login-screen">

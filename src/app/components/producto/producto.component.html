@@ -40,12 +40,6 @@
       </div>
     </div>
 
-    <div *ngIf="resultado" class="toast" [ngClass]="resultado.tipo === 'exito' ? 'toast-exito' : 'toast-error'">
-      <span class="toast-icon">{{ resultado.tipo === 'exito' ? 'OK' : 'XX' }}</span>
-      <span class="toast-msg">{{ resultado.mensaje }}</span>
-      <button class="toast-close" (click)="resultado = null">X</button>
-    </div>
-
     <div *ngIf="loading" class="loading-overlay">
       <div class="spinner-large"></div>
     </div>
